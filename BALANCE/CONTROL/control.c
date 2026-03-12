@@ -105,7 +105,7 @@ int TIM1_UP_IRQHandler(void)
 		state->x0_raw = x0_raw;
 		state->x2_raw = x2_raw;             
 
-		Framework_TickFromISR(0.005f);  //===框架时间基准（5ms）
+		Framework_TickFromISR(0.001f);  //===框架时间基准（5ms）
 		Framework_RunOnce();
 		Set_Pwm((state->y_pos + state->y_w) * 600);		//===赋值给PWM寄存器
 		
