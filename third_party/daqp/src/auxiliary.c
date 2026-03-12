@@ -90,6 +90,7 @@ int add_infeasible(DAQPWorkspace *work){
     c_float min_val = ep;
     c_float Mu,min_cand;
     int isupper=0, add_ind=EMPTY_IND;
+    c_float *swp_ptr;
     // Simple bounds 
     for(j=0, disp=0;j<N_SIMPLE;j++){
         // Never activate immutable or already active constraints 
@@ -148,7 +149,6 @@ int add_infeasible(DAQPWorkspace *work){
     else
         SET_LOWER(add_ind);
     // Set lam = lam_star
-    c_float *swp_ptr;
     swp_ptr=work->lam; work->lam = work->lam_star; work->lam_star=swp_ptr;
     // Add the constraint
     if(isupper)
@@ -164,6 +164,7 @@ int remove_blocking(DAQPWorkspace *work){
     c_float alpha_cand, lam_slack;
     const c_float dual_tol = work->settings->dual_tol;
     c_float p;
+    int abs_rm_id;
     for(i=0;i<work->n_active;i++){
         ind = work->WS[i];
         if(IS_IMMUTABLE(ind)) continue;
@@ -221,7 +222,7 @@ int remove_blocking(DAQPWorkspace *work){
 
     // Remove the constraint from the working set and update LDL
     work->sing_ind=EMPTY_IND;
-    int abs_rm_id = work->WS[rm_ind];
+    abs_rm_id = work->WS[rm_ind];
     lam_slack = work->lam[rm_ind];
 
     remove_constraint(work,rm_ind);
@@ -344,15 +345,17 @@ void compute_singular_direction(DAQPWorkspace *work){
 
 void pivot_last(DAQPWorkspace *work){
     const int rm_ind = work->n_active-2; 
+    int ind_old;
+    c_float lam_old;
     if(work->n_active > 1 && 
             work->D[rm_ind] < work->settings->pivot_tol && // element in D small enough
             work->D[rm_ind] < work->D[work->n_active-1]){ // element in D smallar than neighbor
-        const int ind_old = work->WS[rm_ind];
+        ind_old = work->WS[rm_ind];
         // Ensure that binaries never swap order (since this order is exploited) 
         if(IS_BINARY(ind_old) && IS_BINARY(work->WS[work->n_active-1])) return; 
         if(work->bnb != NULL && rm_ind < work->bnb->n_clean) return;
 
-        c_float lam_old = work->lam[rm_ind];
+        lam_old = work->lam[rm_ind];
         remove_constraint(work,rm_ind); // pivot_last might be recursively called here 
 
         if(work->sing_ind!=EMPTY_IND) return; // Abort if D becomes singular

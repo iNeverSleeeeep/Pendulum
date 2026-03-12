@@ -2,19 +2,22 @@
 
 c_float daqp_dot(const c_float* v1, const c_float* v2, const int n) {
     c_float sum = 0.0;
-    for (int i = 0; i < n; i++) sum += v1[i] * v2[i];
+    int i;
+    for (i = 0; i < n; i++) sum += v1[i] * v2[i];
     return sum;
 }
 
 
 void update_LDL_add(DAQPWorkspace *work, const int add_ind){
-    work->sing_ind = EMPTY_IND;
     int i,j,disp,id;
     int new_L_start= ARSUM(work->n_active);
     int start_col;
     int ns_active=0;
     c_float sum;
+    c_float tmp;
     c_float *Mi, *Mk;
+
+    work->sing_ind = EMPTY_IND;
 
     // di <-- Mi' Mi
     // If normalized this will always be 1...
@@ -79,7 +82,6 @@ void update_LDL_add(DAQPWorkspace *work, const int add_ind){
     // Scale: l_i <-- l_i/d_i
     // Update d_new -= l'Dl
     sum = work->D[work->n_active];
-    c_float tmp;
     for (i =0,disp=new_L_start; i<work->n_active;i++,disp++){
         tmp = work->L[disp];
         work->L[disp] /= work->D[i];  
@@ -95,10 +97,13 @@ void update_LDL_add(DAQPWorkspace *work, const int add_ind){
     }
 }
 void update_LDL_remove(DAQPWorkspace *work, const int rm_ind){
-    if(work->n_active==rm_ind+1)
-        return;
     int i, j, r, old_disp, new_disp, w_count, n_update=work->n_active-rm_ind-1;
     c_float* w = &work->zldl[rm_ind]; // zldl will be obsolete => use to allocations
+    c_float p,beta,dbar,alpha=work->D[rm_ind];
+
+    if(work->n_active==rm_ind+1)
+        return;
+
     // Extract parts to keep/update in L & D
     new_disp=ARSUM(rm_ind);
     old_disp=new_disp+(rm_ind+1);
@@ -114,7 +119,6 @@ void update_LDL_remove(DAQPWorkspace *work, const int rm_ind){
         }
     // Algorithm C1 in Gill 1974 for low-rank update of LDL
     // L2 block
-    c_float p,beta,dbar,alpha=work->D[rm_ind];
     // i - Element/row to update|j - Column which is looped over|r - Row to loop over
     old_disp=ARSUM(rm_ind)+rm_ind;
     for(j = 0, i=rm_ind+1;j<n_update;j++,i++){

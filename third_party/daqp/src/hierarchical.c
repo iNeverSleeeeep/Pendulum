@@ -7,6 +7,10 @@ int daqp_hiqp(DAQPWorkspace *work, c_float *lambda){
     int start,end;
     int iterations = 0;
     int exitflag=0;
+    c_float w;
+    int nfree = work->n;
+    int n_active_old;
+    int jj;
 
     // If only one hiearchy -> just solve normal LDP
     if( work->nh < 2) return daqp_ldp(work);
@@ -16,9 +20,7 @@ int daqp_hiqp(DAQPWorkspace *work, c_float *lambda){
     if(lambda != NULL) for(i=0;i<work->m;i++) lambda[i]=0;
 
     // Start moving down the hierarchy
-    c_float w;
     start=work->break_points[0];
-    int nfree = work->n;
     for(i =1; i < work->nh; i++){
         // initialize current level
         end=work->break_points[i];
@@ -72,8 +74,8 @@ int daqp_hiqp(DAQPWorkspace *work, c_float *lambda){
 
         // reactive constraint in level current (to addresss soft->hard)
         // TODO: can factorization be directly reused?
-        int n_active_old = (work->n_active < work->n) ? work->n_active : work->n;
-        for(int jj=n_active_old; jj < work->n_active ;jj++) {
+        n_active_old = (work->n_active < work->n) ? work->n_active : work->n;
+        for(jj=n_active_old; jj < work->n_active ;jj++) {
             work->sense[work->WS[jj]]&=~(ACTIVE+IMMUTABLE); // ensure inactive + mutable
         }
         work->n_active =j;

@@ -76,11 +76,12 @@ int update_ldp(const int mask, DAQPWorkspace *work, DAQPProblem* qp){
 
     // Make sure activate constraints are activated
     if(do_activate == 1){
+        int m_tmp;
         reset_daqp_workspace(work);
         if(work->nh < 2)
             error_flag = activate_constraints(work);
         else{// Activate the first level (since those constraints are hard)
-            int m_tmp = work->m;
+            m_tmp = work->m;
             work->m = work->break_points[0];
             error_flag = activate_constraints(work);
             work->m = m_tmp;
@@ -97,6 +98,7 @@ int update_Rinv(DAQPWorkspace *work, c_float *H){
     const int n = NX; 
         // Check if diagonal
     int is_diagonal = 1;
+    c_float Hi;
     for (i=0,disp=1; i<n; i++, disp+=i+1){
         for (j=1; j<n-i; j++,disp++) {
             if(H[disp] > 1e-12 || H[disp] < -1e-12){
@@ -113,7 +115,6 @@ int update_Rinv(DAQPWorkspace *work, c_float *H){
             work->RinvD = work->Rinv;
             work->Rinv = NULL;
         }
-        c_float Hi;
         i=0; disp=0;
         if(work->scaling != NULL){
             for(;i<N_SIMPLE;i++,disp+=n){ // Combine with settings scaling
@@ -220,6 +221,7 @@ int update_M(DAQPWorkspace *work, c_float *A, const int mask){
 void update_v(c_float *f, DAQPWorkspace *work, const int mask){
     int i,j,disp;
     const int n = NX;
+    int stop_id;
     if(work->v == NULL || f == NULL) return;
     if(work->Rinv == NULL){// Rinv = I => v = R'\v = f
         if(work->RinvD != NULL)
@@ -228,7 +230,7 @@ void update_v(c_float *f, DAQPWorkspace *work, const int mask){
             for(i=0;i<n;++i) work->v[i] = f[i];
         return;
     }
-    int stop_id =  (mask & UPDATE_Rinv) ? 0 : N_SIMPLE;
+    stop_id =  (mask & UPDATE_Rinv) ? 0 : N_SIMPLE;
     for(j=n-1,disp=ARSUM(n);j>=stop_id;j--){
         for(i=n-1;i>j;i--)
             work->v[i] +=work->Rinv[--disp]*f[j];
@@ -246,6 +248,7 @@ int update_d(DAQPWorkspace *work, c_float *bupper, c_float *blower){
     int i,j,disp;
     int do_activate = 0;
     c_float sum;
+    const int n = NX;
 
 #ifndef DAQP_ASSUME_VALID
     c_float diff;
@@ -265,7 +268,6 @@ int update_d(DAQPWorkspace *work, c_float *bupper, c_float *blower){
     }
 #endif
 
-    const int n = NX;
     work->reuse_ind = 0; // RHS of KKT system changed => cannot reuse intermediate results
     // Take into scaling of constraints
     if(work->scaling != NULL){

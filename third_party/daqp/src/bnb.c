@@ -96,6 +96,7 @@ int process_node(DAQPNode* node, DAQPWorkspace* work){
 int get_branch_id(DAQPWorkspace* work){
     int i,disp;
     int branch_id = EMPTY_IND;
+    c_float diff;
     for(i=0; i < work->bnb->nb; i++){
         // Branch on first inactive constraint 
         if(IS_ACTIVE(work->bnb->bin_ids[i])) continue;
@@ -107,7 +108,7 @@ int get_branch_id(DAQPWorkspace* work){
 
     // Determine if upper or lower child should be processed first 
     // by computing whether the upper or lower bound is closer to be activated
-    c_float diff = 0.5*(work->dupper[branch_id]+work->dlower[branch_id]);
+    diff = 0.5*(work->dupper[branch_id]+work->dlower[branch_id]);
     if(IS_SIMPLE(branch_id)){//Simple bound
         if(work->Rinv==NULL) diff-=work->u[branch_id]; //Hessian is identify 
         else{

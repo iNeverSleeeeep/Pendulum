@@ -60,6 +60,9 @@ void daqp_quadprog(DAQPResult *res, DAQPProblem* qp, DAQPSettings *settings){
 int setup_daqp(DAQPProblem* qp, DAQPWorkspace *work, c_float* setup_time){
     int errorflag;
     int own_settings=1;
+    int ns = 0, nb = 0;
+    int i;
+    int start;
     (void)setup_time; // avoids warning when compiling without profiling
 #ifdef PROFILING
     DAQPtimer timer;
@@ -73,8 +76,6 @@ int setup_daqp(DAQPProblem* qp, DAQPWorkspace *work, c_float* setup_time){
 
     // Count number of soft/binary constraints 
     // (to account for it in allocation)
-    int ns = 0, nb = 0;
-    int i;
     if(qp->sense != NULL){
         for(i = 0; i < qp->m ; i++){
             if(qp->sense[i] & SOFT) ns++;
@@ -84,8 +85,8 @@ int setup_daqp(DAQPProblem* qp, DAQPWorkspace *work, c_float* setup_time){
     // Correct number of soft constraints if several hierarchies
     if(qp->nh > 1){
         ns = 0; // Reset
-        int start = 0;
-        for(int i = 0; i < qp->nh; i++){
+        start = 0;
+        for(i = 0; i < qp->nh; i++){
             ns = (ns  > qp->break_points[i]-start) ? ns : qp->break_points[i]-start;
             start = qp->break_points[i];
         }
