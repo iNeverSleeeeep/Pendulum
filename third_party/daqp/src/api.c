@@ -1,8 +1,6 @@
 #include "api.h" 
 #include "utils.h"
 #include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
 
 // Solve problem from a given workspace and measure setup and solve time 
 void daqp_solve(DAQPResult *res, DAQPWorkspace *work){
@@ -10,20 +8,8 @@ void daqp_solve(DAQPResult *res, DAQPWorkspace *work){
     DAQPtimer timer;
     tic(&timer);
 #endif
-    // Select algorithm
-    if(work->settings->eps_prox==0){
-        if(work->bnb != NULL)
-            res->exitflag = daqp_bnb(work);
-        else if(work->nh > 1)
-            res->exitflag = daqp_hiqp(work,res->lam);
-        else
-            res->exitflag = daqp_ldp(work);
-
-        if(res->exitflag > 0) ldp2qp_solution(work); // Retrieve qp solution 
-    }
-    else{//Prox
-        res->exitflag = daqp_prox(work);
-    }
+    res->exitflag = daqp_ldp(work);
+    if(res->exitflag > 0) ldp2qp_solution(work);
 #ifdef PROFILING
     toc(&timer);
 #endif
@@ -60,9 +46,6 @@ void daqp_quadprog(DAQPResult *res, DAQPProblem* qp, DAQPSettings *settings){
 int setup_daqp(DAQPProblem* qp, DAQPWorkspace *work, c_float* setup_time){
     int errorflag;
     int own_settings=1;
-    int ns = 0, nb = 0;
-    int i;
-    int start;
     (void)setup_time; // avoids warning when compiling without profiling
 #ifdef PROFILING
     DAQPtimer timer;
@@ -74,39 +57,14 @@ int setup_daqp(DAQPProblem* qp, DAQPWorkspace *work, c_float* setup_time){
     // Check if QP is well-posed
     //validate_QP(qp);
 
-    // Count number of soft/binary constraints 
-    // (to account for it in allocation)
-    if(qp->sense != NULL){
-        for(i = 0; i < qp->m ; i++){
-            if(qp->sense[i] & SOFT) ns++;
-            if(qp->sense[i] & BINARY) nb++;
-        }
-    }
-    // Correct number of soft constraints if several hierarchies
-    if(qp->nh > 1){
-        ns = 0; // Reset
-        start = 0;
-        for(i = 0; i < qp->nh; i++){
-            ns = (ns  > qp->break_points[i]-start) ? ns : qp->break_points[i]-start;
-            start = qp->break_points[i];
-        }
-     }
-   
     // Setup workspace
     if(work->settings == NULL)
         allocate_daqp_settings(work);
     else
         own_settings = 0;
-    allocate_daqp_workspace(work,qp->n,ns);
+    allocate_daqp_workspace(work,qp->n,0);
 
     errorflag = setup_daqp_ldp(work,qp);
-    if(errorflag < 0){
-        if(own_settings==0) work->settings = NULL;
-        free_daqp_workspace(work);
-        return errorflag;
-    }
-
-    errorflag = setup_daqp_bnb(work, nb, ns);  
     if(errorflag < 0){
         if(own_settings==0) work->settings = NULL;
         free_daqp_workspace(work);
@@ -157,33 +115,15 @@ int setup_daqp_ldp(DAQPWorkspace *work, DAQPProblem *qp){
 
 
 void setup_daqp_hiqp(DAQPWorkspace* work, int* break_points, int nh){
-    if(nh > 1){
-        work->nh = nh;
-        work->break_points= break_points;
-    }
+    (void)work;
+    (void)break_points;
+    (void)nh;
 }
 
 int setup_daqp_bnb(DAQPWorkspace* work, int nb, int ns){
-    int i, nadded;
-    if(nb > work->n) return EXIT_OVERDETERMINED_INITIAL;
-    if((work->bnb == NULL) && (nb >0)){
-        work->bnb= malloc(sizeof(DAQPBnB));
-
-        work->bnb->nb = nb;
-        // Detect which constraints are binary
-        work->bnb->bin_ids = malloc(nb*sizeof(int));
-        for(i = 0, nadded = 0; nadded < nb; i++){
-            if(work->qp->sense[i] & BINARY)
-                work->bnb->bin_ids[nadded++] = i;
-        }
-
-        // Setup tree
-        work->bnb->tree= malloc((work->bnb->nb+1)*sizeof(DAQPNode));
-        work->bnb->tree_WS= malloc((work->n+ns+1)*(nb+1)*sizeof(int));
-        work->bnb->n_nodes = 0; 
-        work->bnb->nWS= 0; 
-        work->bnb->fixed_ids= malloc((nb+1)*sizeof(int));
-    }
+    (void)work;
+    (void)nb;
+    (void)ns;
     return 1;
 }
 
@@ -227,13 +167,7 @@ void allocate_daqp_settings(DAQPWorkspace *work){
 }
 
 void free_daqp_bnb(DAQPWorkspace* work){
-    if(work->bnb != NULL){
-        free(work->bnb->tree);
-        free(work->bnb->tree_WS);
-        free(work->bnb->fixed_ids);
-        free(work->bnb);
-        work->bnb = NULL;
-    }
+    work->bnb = NULL;
 }
 
 // Allocate memory for iterates  

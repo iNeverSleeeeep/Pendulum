@@ -143,24 +143,25 @@ void oled_show(void)
 **************************************************************************/
 void DataScope(void)
 {   
-	  RuntimeState *state = (RuntimeState *)Framework_DataGet("runtime_state", 0);
-		DataScope_Get_Channel_Data( state->x0_raw * 10000.0 - state->x0_init * 10000.0, 1 );           
-		DataScope_Get_Channel_Data( state->x0 * 100.0, 2 );              
-		DataScope_Get_Channel_Data( state->x1 * 100.0, 3 );   
-		DataScope_Get_Channel_Data( state->x2_raw * 180.0 / 3.1415926, 4 );    
-		DataScope_Get_Channel_Data( state->x2 * 180.0 / 3.1415926, 5 ); //用您要显示的数据替换0就行了
-		DataScope_Get_Channel_Data( state->x3 * 180.0 / 3.1415926, 6 );//用您要显示的数据替换0就行了
-		DataScope_Get_Channel_Data( state->x0_init * 10000.0, 7 );
-		DataScope_Get_Channel_Data( state->is_initialized * 10000.0, 8 ); 
-//		DataScope_Get_Channel_Data(0, 9 );  
-//		DataScope_Get_Channel_Data( 0 , 10);
-		Send_Count = DataScope_Data_Generate(8);
-		for( i = 0 ; i < Send_Count; i++) 
-		{
-		while((USART1->SR&0X40)==0);  
-		USART1->DR = DataScope_OutPut_Buffer[i]; 
-		}
-}	
+    RuntimeState *state = (RuntimeState *)Framework_DataGet("runtime_state", 0);
+    if (state == 0) {
+        return;
+    }
+    DataScope_Get_Channel_Data( state->x0 * 100.0, 1 );
+    DataScope_Get_Channel_Data( state->x1 * 100.0, 2 );
+    DataScope_Get_Channel_Data( state->x2 * 180.0 / 3.1415926, 3 );
+    DataScope_Get_Channel_Data( state->x2_target * 180.0 / 3.1415926, 4 );
+    DataScope_Get_Channel_Data( state->mpc_f0, 5 );
+    DataScope_Get_Channel_Data( state->mpc_u0 * 180.0 / 3.1415926, 6 );
+    DataScope_Get_Channel_Data( state->y_w, 7 );
+    DataScope_Get_Channel_Data( (float)state->qp_status, 8 );
+    Send_Count = DataScope_Data_Generate(8);
+    for( i = 0 ; i < Send_Count; i++) 
+    {
+        while((USART1->SR&0X40)==0);
+        USART1->DR = DataScope_OutPut_Buffer[i];
+    }
+}
 
 //提示页 ：检测到摆杆需要调节，请根据提示调节摆杆，按下一页按键开始调节
 void show_Tips(void)

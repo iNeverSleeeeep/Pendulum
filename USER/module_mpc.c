@@ -13,6 +13,62 @@
 #define MPC_PREDICTION_HORIZON 10
 #define MPC_QP_ITERS 12
 
+#define MPC_STATUS_SETUP_BASE   (-100)
+#define MPC_STATUS_UPDATE_BASE  (-200)
+#define MPC_STATUS_SOLVE_BASE   (-300)
+#define MPC_STATUS_INPUT_ERROR  (-400)
+#define MPC_STATUS_STATE_ERROR  (-401)
+
+#define MPC_STATUS_SETUP_INFEASIBLE     (MPC_STATUS_SETUP_BASE + 1)
+#define MPC_STATUS_SETUP_CYCLE          (MPC_STATUS_SETUP_BASE + 2)
+#define MPC_STATUS_SETUP_UNBOUNDED      (MPC_STATUS_SETUP_BASE + 3)
+#define MPC_STATUS_SETUP_ITERLIMIT      (MPC_STATUS_SETUP_BASE + 4)
+#define MPC_STATUS_SETUP_NONCONVEX      (MPC_STATUS_SETUP_BASE + 5)
+#define MPC_STATUS_SETUP_OVERDET        (MPC_STATUS_SETUP_BASE + 6)
+#define MPC_STATUS_SETUP_UNKNOWN        (MPC_STATUS_SETUP_BASE)
+
+#define MPC_STATUS_UPDATE_INFEASIBLE    (MPC_STATUS_UPDATE_BASE + 1)
+#define MPC_STATUS_UPDATE_CYCLE         (MPC_STATUS_UPDATE_BASE + 2)
+#define MPC_STATUS_UPDATE_UNBOUNDED     (MPC_STATUS_UPDATE_BASE + 3)
+#define MPC_STATUS_UPDATE_ITERLIMIT     (MPC_STATUS_UPDATE_BASE + 4)
+#define MPC_STATUS_UPDATE_NONCONVEX     (MPC_STATUS_UPDATE_BASE + 5)
+#define MPC_STATUS_UPDATE_OVERDET       (MPC_STATUS_UPDATE_BASE + 6)
+#define MPC_STATUS_UPDATE_UNKNOWN       (MPC_STATUS_UPDATE_BASE)
+
+#define MPC_STATUS_SOLVE_ZERO           (MPC_STATUS_SOLVE_BASE)
+#define MPC_STATUS_SOLVE_INFEASIBLE     (MPC_STATUS_SOLVE_BASE + 1)
+#define MPC_STATUS_SOLVE_CYCLE          (MPC_STATUS_SOLVE_BASE + 2)
+#define MPC_STATUS_SOLVE_UNBOUNDED      (MPC_STATUS_SOLVE_BASE + 3)
+#define MPC_STATUS_SOLVE_ITERLIMIT      (MPC_STATUS_SOLVE_BASE + 4)
+#define MPC_STATUS_SOLVE_NONCONVEX      (MPC_STATUS_SOLVE_BASE + 5)
+#define MPC_STATUS_SOLVE_OVERDET        (MPC_STATUS_SOLVE_BASE + 6)
+
+static int Mpc_MapStageStatus(int stage_base, int raw_code)
+{
+    if (raw_code > 0) {
+        return raw_code;
+    }
+
+    switch (raw_code) {
+    case 0:
+        return stage_base;
+    case EXIT_INFEASIBLE:
+        return stage_base + 1;
+    case EXIT_CYCLE:
+        return stage_base + 2;
+    case EXIT_UNBOUNDED:
+        return stage_base + 3;
+    case EXIT_ITERLIMIT:
+        return stage_base + 4;
+    case EXIT_NONCONVEX:
+        return stage_base + 5;
+    case EXIT_OVERDETERMINED_INITIAL:
+        return stage_base + 6;
+    default:
+        return stage_base;
+    }
+}
+
 typedef struct
 {
     /* 离散状态矩阵 A */
@@ -43,6 +99,19 @@ typedef struct
     float H[MPC_PREDICTION_HORIZON][MPC_PREDICTION_HORIZON];
     /* 当前控制序列 U */
     float u_seq[MPC_PREDICTION_HORIZON];
+    /* 预计算阶段临时矩阵 A^k */
+    float powers[MPC_PREDICTION_HORIZON + 1][MPC_STATE_DIM][MPC_STATE_DIM];
+    /* 预计算阶段临时向量 */
+    float tmp_vec[MPC_STATE_DIM];
+    /* 求解阶段临时向量 M * x */
+    float mx[MPC_PREDICTION_HORIZON * MPC_STATE_DIM];
+    /* 求解阶段临时向量 Q_bar * M * x */
+    float qmx[MPC_PREDICTION_HORIZON * MPC_STATE_DIM];
+    /* 求解阶段线性项 */
+    float f[MPC_PREDICTION_HORIZON];
+    /* 输入上下界 */
+    float lb[MPC_PREDICTION_HORIZON];
+    float ub[MPC_PREDICTION_HORIZON];
 } MpcWorkspace;
 
 typedef struct
@@ -199,20 +268,16 @@ static int Mpc_DaqpSetup(void)
     return 0;
 }
 
-static void Mpc_WorkspaceInit(void)
+static void Mpc_WorkspaceInit_S1(void)
 {
-    /* 保存 A^0 到 A^Np */
-    float powers[MPC_PREDICTION_HORIZON + 1][MPC_STATE_DIM][MPC_STATE_DIM];
-    /* 临时保存 A^(i-j) * B 的结果 */
-    float tmp_vec[MPC_STATE_DIM];
     u8 i;
     u8 j;
     u8 r;
     u8 c;
 
-    Mpc_MatIdentity(powers[0]);
+    Mpc_MatIdentity(g_mpc_ws.powers[0]);
     for (i = 1; i <= MPC_PREDICTION_HORIZON; ++i) {
-        Mpc_Mat3Mul(powers[i - 1], g_mpc_cfg.A, powers[i]);
+        Mpc_Mat3Mul(g_mpc_ws.powers[i - 1], g_mpc_cfg.A, g_mpc_ws.powers[i]);
     }
 
     for (r = 0; r < MPC_PREDICTION_HORIZON * MPC_STATE_DIM; ++r) {
@@ -234,13 +299,13 @@ static void Mpc_WorkspaceInit(void)
     for (i = 0; i < MPC_PREDICTION_HORIZON; ++i) {
         for (r = 0; r < MPC_STATE_DIM; ++r) {
             for (c = 0; c < MPC_STATE_DIM; ++c) {
-                g_mpc_ws.M[i * MPC_STATE_DIM + r][c] = powers[i + 1][r][c];
+                g_mpc_ws.M[i * MPC_STATE_DIM + r][c] = g_mpc_ws.powers[i + 1][r][c];
             }
         }
         for (j = 0; j <= i; ++j) {
-            Mpc_Mat3VecMul(powers[i - j], g_mpc_cfg.B, tmp_vec);
+            Mpc_Mat3VecMul(g_mpc_ws.powers[i - j], g_mpc_cfg.B, g_mpc_ws.tmp_vec);
             for (r = 0; r < MPC_STATE_DIM; ++r) {
-                g_mpc_ws.C[i * MPC_STATE_DIM + r][j] = tmp_vec[r];
+                g_mpc_ws.C[i * MPC_STATE_DIM + r][j] = g_mpc_ws.tmp_vec[r];
             }
         }
         for (r = 0; r < MPC_STATE_DIM; ++r) {
@@ -277,7 +342,25 @@ static void Mpc_WorkspaceInit(void)
     }
 
     g_mpc_ws.is_initialized = 1;
+}
+
+static void Mpc_WorkspaceInit_S2(void)
+{
     (void)Mpc_DaqpSetup();
+}
+
+static void Mpc_WorkspaceInit(void)
+{
+    if (g_mpc_ws.is_initialized == 0) {
+        Mpc_WorkspaceInit_S1();
+    }
+    Mpc_WorkspaceInit_S2();
+}
+
+static void Mpc_ModuleReset(void *user_ctx)
+{
+    (void)user_ctx;
+    Mpc_WorkspaceInit();
 }
 
 static int quadprog(const float H[MPC_PREDICTION_HORIZON][MPC_PREDICTION_HORIZON],
@@ -294,7 +377,7 @@ static int quadprog(const float H[MPC_PREDICTION_HORIZON][MPC_PREDICTION_HORIZON
 
     exitflag = Mpc_DaqpSetup();
     if (exitflag < 0) {
-        return exitflag;
+        return Mpc_MapStageStatus(MPC_STATUS_SETUP_BASE, exitflag);
     }
 
     if (options != 0 && options->max_iters > 0) {
@@ -311,12 +394,12 @@ static int quadprog(const float H[MPC_PREDICTION_HORIZON][MPC_PREDICTION_HORIZON
     g_mpc_qp.problem.f = (c_float *)f;
     exitflag = update_ldp(UPDATE_v + UPDATE_d, &g_mpc_qp.workspace, &g_mpc_qp.problem);
     if (exitflag < 0) {
-        return exitflag;
+        return Mpc_MapStageStatus(MPC_STATUS_UPDATE_BASE, exitflag);
     }
 
     daqp_solve(&g_mpc_qp.result, &g_mpc_qp.workspace);
     if (g_mpc_qp.result.exitflag <= 0) {
-        return g_mpc_qp.result.exitflag;
+        return Mpc_MapStageStatus(MPC_STATUS_SOLVE_BASE, g_mpc_qp.result.exitflag);
     }
 
     for (i = 0; i < MPC_PREDICTION_HORIZON; ++i) {
@@ -330,18 +413,8 @@ static int quadprog(const float H[MPC_PREDICTION_HORIZON][MPC_PREDICTION_HORIZON
     return g_mpc_qp.result.exitflag;
 }
 
-static void Mpc_Solve(const float x[MPC_STATE_DIM], float *u0_out)
+static int Mpc_Solve(const float x[MPC_STATE_DIM], float *u0_out)
 {
-    /* MATLAB 中的 M * x */
-    float mx[MPC_PREDICTION_HORIZON * MPC_STATE_DIM];
-    /* MATLAB 中的 Q_bar * M * x */
-    float qmx[MPC_PREDICTION_HORIZON * MPC_STATE_DIM];
-    /* MATLAB 中的线性项 f = 2 * C' * Q_bar * M * x */
-    float f[MPC_PREDICTION_HORIZON];
-    /* 输入下界，对应 MATLAB 中的 lb */
-    float lb[MPC_PREDICTION_HORIZON];
-    /* 输入上界，对应 MATLAB 中的 ub */
-    float ub[MPC_PREDICTION_HORIZON];
     /* 当前二次规划目标函数值 */
     float f_val = 0.0f;
     /* quadprog 求解选项 */
@@ -349,6 +422,10 @@ static void Mpc_Solve(const float x[MPC_STATE_DIM], float *u0_out)
     int qp_status;
     u8 i;
     u8 j;
+
+    if ((x == 0) || (u0_out == 0)) {
+        return MPC_STATUS_INPUT_ERROR;
+    }
 
     if (g_mpc_ws.is_initialized == 0) {
         Mpc_WorkspaceInit();
@@ -359,38 +436,39 @@ static void Mpc_Solve(const float x[MPC_STATE_DIM], float *u0_out)
         for (j = 0; j < MPC_STATE_DIM; ++j) {
             sum += g_mpc_ws.M[i][j] * x[j];
         }
-        mx[i] = sum;
+        g_mpc_ws.mx[i] = sum;
     }
 
     for (i = 0; i < MPC_PREDICTION_HORIZON * MPC_STATE_DIM; ++i) {
         float sum = 0.0f;
         for (j = 0; j < MPC_PREDICTION_HORIZON * MPC_STATE_DIM; ++j) {
-            sum += g_mpc_ws.Q_bar[i][j] * mx[j];
+            sum += g_mpc_ws.Q_bar[i][j] * g_mpc_ws.mx[j];
         }
-        qmx[i] = sum;
+        g_mpc_ws.qmx[i] = sum;
     }
 
     for (i = 0; i < MPC_PREDICTION_HORIZON; ++i) {
         float sum = 0.0f;
         for (j = 0; j < MPC_PREDICTION_HORIZON * MPC_STATE_DIM; ++j) {
-            sum += g_mpc_ws.C[j][i] * qmx[j];
+            sum += g_mpc_ws.C[j][i] * g_mpc_ws.qmx[j];
         }
-        f[i] = 2.0f * sum;
+        g_mpc_ws.f[i] = 2.0f * sum;
     }
 
     for (i = 0; i < MPC_PREDICTION_HORIZON; ++i) {
-        lb[i] = -g_mpc_cfg.u_max;
-        ub[i] = g_mpc_cfg.u_max;
+        g_mpc_ws.lb[i] = -g_mpc_cfg.u_max;
+        g_mpc_ws.ub[i] = g_mpc_cfg.u_max;
         g_mpc_ws.u_seq[i] = Mpc_Clamp(g_mpc_ws.u_seq[i], g_mpc_cfg.u_max);
     }
 
     options.max_iters = MPC_QP_ITERS;
-    qp_status = quadprog(g_mpc_ws.H, f, lb, ub, &options, g_mpc_ws.u_seq, &f_val);
+    qp_status = quadprog(g_mpc_ws.H, g_mpc_ws.f, g_mpc_ws.lb, g_mpc_ws.ub, &options, g_mpc_ws.u_seq, &f_val);
     if (qp_status <= 0) {
         g_mpc_ws.u_seq[0] = Mpc_Clamp(g_mpc_ws.u_seq[0], g_mpc_cfg.u_max);
     }
 
     *u0_out = g_mpc_ws.u_seq[0];
+    return qp_status;
 }
 
 static void Module_MPC_Update(float dt_s, void *user_ctx)
@@ -408,6 +486,8 @@ static void Module_MPC_Update(float dt_s, void *user_ctx)
         return;
     }
 
+    state->qp_status = MPC_STATUS_STATE_ERROR;
+
     /* 小车位置误差 */
     x[0] = state->x0 - state->x0_target;
     /* 小车速度误差 */
@@ -415,7 +495,9 @@ static void Module_MPC_Update(float dt_s, void *user_ctx)
     /* 摆杆角度误差 */
     x[2] = state->x2 - state->x2_target;
 
-    Mpc_Solve(x, &u_k);
+    state->qp_status = Mpc_Solve(x, &u_k);
+    state->mpc_f0 = g_mpc_ws.f[0];
+    state->mpc_u0 = g_mpc_ws.u_seq[0];
 
     /* 对应 MATLAB 输出 x_d(1) */
     state->x0_target = 0.0f;
@@ -433,7 +515,7 @@ static FrameworkModuleDescriptor g_module_mpc =
     0.05f,
     Priority_Controller_Pos,
     Module_MPC_Update,
-    0,
+    Mpc_ModuleReset,
     0
 };
 

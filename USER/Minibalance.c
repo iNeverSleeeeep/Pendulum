@@ -33,10 +33,10 @@ int main(void)
 	Framework_Init();
 	Framework_ModuleSetEnabled("klf_pos", 1);
 	Framework_ModuleSetEnabled("klf_w", 1);
-	Framework_ModuleSetEnabled("lqr", 1);
+	//Framework_ModuleSetEnabled("lqr", 0);
 	Framework_ModuleSetEnabled("smc", 0);
-	Framework_ModuleSetEnabled("pid", 1);
-	Framework_ModuleSetEnabled("mpc", 0);
+	//Framework_ModuleSetEnabled("pid", 0);
+	Framework_ModuleSetEnabled("mpc", 1);
 	while(1)
 	{
 		DataScope();	            //===ион╩╩З

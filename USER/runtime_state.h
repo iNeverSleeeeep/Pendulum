@@ -25,6 +25,10 @@ typedef struct
 
     float y_pos; // 当前输出电压（角度环）
     float y_w; // 当前输出电压（位置环）
+
+    int qp_status; // MPC/DAQP状态码：>0成功；-1xx setup失败；-2xx update失败；-3xx solve失败；-4xx 参数/状态错误
+    float mpc_f0; // MPC线性项首元素
+    float mpc_u0; // MPC最优控制首元素
 } RuntimeState;
 
 enum {
