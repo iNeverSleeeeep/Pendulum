@@ -147,13 +147,13 @@ void DataScope(void)
     if (state == 0) {
         return;
     }
-    DataScope_Get_Channel_Data( state->x0 * 100.0, 1 );
-    DataScope_Get_Channel_Data( state->x1 * 100.0, 2 );
-    DataScope_Get_Channel_Data( state->x2 * 180.0 / 3.1415926, 3 );
-    DataScope_Get_Channel_Data( state->x2_target * 180.0 / 3.1415926, 4 );
-    DataScope_Get_Channel_Data( state->mpc_f0, 5 );
-    DataScope_Get_Channel_Data( state->mpc_u0 * 180.0 / 3.1415926, 6 );
-    DataScope_Get_Channel_Data( state->y_w, 7 );
+    DataScope_Get_Channel_Data( state->mpc_u0, 1 );
+    DataScope_Get_Channel_Data( state->mpc_primal0, 2 );
+    DataScope_Get_Channel_Data( state->mpc_x0, 3 );
+    DataScope_Get_Channel_Data( state->mpc_f0, 4 );
+    DataScope_Get_Channel_Data( state->mpc_f1, 5 );
+    DataScope_Get_Channel_Data( state->mpc_f2, 6 );
+    DataScope_Get_Channel_Data( state->mpc_rinv0, 7 );
     DataScope_Get_Channel_Data( (float)state->qp_status, 8 );
     Send_Count = DataScope_Data_Generate(8);
     for( i = 0 ; i < Send_Count; i++) 

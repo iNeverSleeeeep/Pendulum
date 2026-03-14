@@ -12,7 +12,6 @@
 #define MPC_INPUT_DIM 1
 #define MPC_PREDICTION_HORIZON 10
 #define MPC_QP_ITERS 12
-
 #define MPC_STATUS_SETUP_BASE   (-100)
 #define MPC_STATUS_UPDATE_BASE  (-200)
 #define MPC_STATUS_SOLVE_BASE   (-300)
@@ -97,6 +96,7 @@ typedef struct
     float Q_bar[MPC_PREDICTION_HORIZON * MPC_STATE_DIM][MPC_PREDICTION_HORIZON * MPC_STATE_DIM];
     /* 二次规划 Hessian 矩阵 H，按行优先连续存放 */
     float H[MPC_PREDICTION_HORIZON][MPC_PREDICTION_HORIZON];
+    /* DAQP 需要的 Hessian 上三角压缩存储 */
     /* 当前控制序列 U */
     float u_seq[MPC_PREDICTION_HORIZON];
     /* 预计算阶段临时矩阵 A^k */
@@ -224,6 +224,9 @@ static void Mpc_MatIdentity(float out[MPC_STATE_DIM][MPC_STATE_DIM])
     }
 }
 
+
+
+
 static int Mpc_DaqpSetup(void)
 {
     int setup_flag;
@@ -248,7 +251,7 @@ static int Mpc_DaqpSetup(void)
     g_mpc_qp.problem.m = MPC_PREDICTION_HORIZON;
     g_mpc_qp.problem.ms = MPC_PREDICTION_HORIZON;
     g_mpc_qp.problem.H = &g_mpc_ws.H[0][0];
-    g_mpc_qp.problem.f = 0;
+    g_mpc_qp.problem.f = g_mpc_ws.f;
     g_mpc_qp.problem.A = 0;
     g_mpc_qp.problem.bupper = g_mpc_qp.upper;
     g_mpc_qp.problem.blower = g_mpc_qp.lower;
@@ -498,6 +501,26 @@ static void Module_MPC_Update(float dt_s, void *user_ctx)
     state->qp_status = Mpc_Solve(x, &u_k);
     state->mpc_f0 = g_mpc_ws.f[0];
     state->mpc_u0 = g_mpc_ws.u_seq[0];
+    state->mpc_primal0 = (float)g_mpc_qp.primal[0];
+    state->mpc_x0 = (g_mpc_qp.workspace.x != 0) ? (float)g_mpc_qp.workspace.x[0] : 0.0f;
+    state->mpc_h00 = g_mpc_ws.H[0][0];
+    state->mpc_f1 = g_mpc_ws.f[1];
+    state->mpc_f2 = g_mpc_ws.f[2];
+    state->mpc_v0 = (g_mpc_qp.workspace.v != 0) ? (float)g_mpc_qp.workspace.v[0] : 0.0f;
+    state->mpc_v1 = (g_mpc_qp.workspace.v != 0) ? (float)g_mpc_qp.workspace.v[1] : 0.0f;
+    state->mpc_v2 = (g_mpc_qp.workspace.v != 0) ? (float)g_mpc_qp.workspace.v[2] : 0.0f;
+    state->mpc_u_internal0 = (g_mpc_qp.workspace.u != 0) ? (float)g_mpc_qp.workspace.u[0] : 0.0f;
+    if (g_mpc_qp.workspace.Rinv != 0) {
+        state->mpc_rinv0 = (float)g_mpc_qp.workspace.Rinv[0];
+    } else if (g_mpc_qp.workspace.RinvD != 0) {
+        state->mpc_rinv0 = (float)g_mpc_qp.workspace.RinvD[0];
+    } else {
+        state->mpc_rinv0 = 0.0f;
+    }
+    state->mpc_iter = (float)g_mpc_qp.result.iter;
+    state->mpc_v_null = (g_mpc_qp.workspace.v == 0) ? 1.0f : 0.0f;
+    state->mpc_rinv_null = (g_mpc_qp.workspace.Rinv == 0) ? 1.0f : 0.0f;
+    state->mpc_rinvd_null = (g_mpc_qp.workspace.RinvD == 0) ? 1.0f : 0.0f;
 
     /* 对应 MATLAB 输出 x_d(1) */
     state->x0_target = 0.0f;
