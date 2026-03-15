@@ -41,6 +41,10 @@ static void Module_Simulation_Update(float dt_s, void *user_ctx)
     float dx1;
     float dx2;
     float dx3;
+    float last_x0;
+    float last_x1;
+    float last_x2;
+    float last_x3;
     if (state == 0) {
         return;
     }
@@ -52,32 +56,42 @@ static void Module_Simulation_Update(float dt_s, void *user_ctx)
         // 状态更新（欧拉积分，基于状态方程 dx/dt = Ax + Bu）
         // dx = A * x + B * u;  
         // x = x + dx * dt;  
+				
+        // last_x0 = last_state->x[0];
+        // last_x1 = last_state->x[1];
+        // last_x2 = last_state->x[2];
+        // last_x3 = last_state->x[3];
+				
+        last_x0 = state->x_sim[0];
+        last_x1 = state->x_sim[1];
+        last_x2 = state->x_sim[2];
+        last_x3 = state->x_sim[3];
 
-        dx0 = g_state_space_cfg.A[0][0] * last_state->x[0]
-            + g_state_space_cfg.A[0][1] * last_state->x[1]
-            + g_state_space_cfg.A[0][2] * last_state->x[2]
-            + g_state_space_cfg.A[0][3] * last_state->x[3]
+        dx0 = g_state_space_cfg.A[0][0] * last_x0
+            + g_state_space_cfg.A[0][1] * last_x1
+            + g_state_space_cfg.A[0][2] * last_x2
+            + g_state_space_cfg.A[0][3] * last_x3
             + g_state_space_cfg.B[0] * u;
-        dx1 = g_state_space_cfg.A[1][0] * last_state->x[0]
-            + g_state_space_cfg.A[1][1] * last_state->x[1]
-            + g_state_space_cfg.A[1][2] * last_state->x[2]
-            + g_state_space_cfg.A[1][3] * last_state->x[3]
+        dx1 = g_state_space_cfg.A[1][0] * last_x0
+            + g_state_space_cfg.A[1][1] * last_x1
+            + g_state_space_cfg.A[1][2] * last_x2
+            + g_state_space_cfg.A[1][3] * last_x3
             + g_state_space_cfg.B[1] * u;
-        dx2 = g_state_space_cfg.A[2][0] * last_state->x[0]
-            + g_state_space_cfg.A[2][1] * last_state->x[1]
-            + g_state_space_cfg.A[2][2] * last_state->x[2]
-            + g_state_space_cfg.A[2][3] * last_state->x[3]
+        dx2 = g_state_space_cfg.A[2][0] * last_x0
+            + g_state_space_cfg.A[2][1] * last_x1
+            + g_state_space_cfg.A[2][2] * last_x2
+            + g_state_space_cfg.A[2][3] * last_x3
             + g_state_space_cfg.B[2] * u;
-        dx3 = g_state_space_cfg.A[3][0] * last_state->x[0]
-            + g_state_space_cfg.A[3][1] * last_state->x[1]
-            + g_state_space_cfg.A[3][2] * last_state->x[2]
-            + g_state_space_cfg.A[3][3] * last_state->x[3]
+        dx3 = g_state_space_cfg.A[3][0] * last_x0
+            + g_state_space_cfg.A[3][1] * last_x1
+            + g_state_space_cfg.A[3][2] * last_x2
+            + g_state_space_cfg.A[3][3] * last_x3
             + g_state_space_cfg.B[3] * u;
 
-        last_state->x[0] += dx0 * dt_s;
-        last_state->x[1] += dx1 * dt_s;
-        last_state->x[2] += dx2 * dt_s;
-        last_state->x[3] += dx3 * dt_s;
+        state->x_sim[0] = last_x0 + dx0 * dt_s;
+        state->x_sim[1] = last_x1 + dx1 * dt_s;
+        state->x_sim[2] = last_x2 + dx2 * dt_s;
+        state->x_sim[3] = last_x3 + dx3 * dt_s;
     }
 
     last_state->x[0] = state->x[0];
@@ -95,7 +109,7 @@ static FrameworkModuleDescriptor g_module_simulation =
     0.001f,
     Priority_Simulation,
     Module_Simulation_Update,
-    0,
+    Module_Simulation_Reset,
     &g_last_state
 };
 

@@ -440,6 +440,16 @@
               <FileType>1</FileType>
               <FilePath>.\module_mpc.c</FilePath>
             </File>
+            <File>
+              <FileName>module_simulation.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\module_simulation.c</FilePath>
+            </File>
+            <File>
+              <FileName>module_step.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\module_step.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

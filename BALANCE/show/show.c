@@ -157,8 +157,8 @@ void DataScope(void)
     DataScope_Get_Channel_Data( state->x_sim[2] * 180.0f / 3.1415926, 6 );
     DataScope_Get_Channel_Data( state->x[3] * 180.0f / 3.1415926, 7 );
     DataScope_Get_Channel_Data( state->x_sim[3] * 180.0f / 3.1415926, 8 );
-    DataScope_Get_Channel_Data( (float)timing_stats.last_us, 9 );
-    DataScope_Get_Channel_Data( (float)timing_stats.max_us, 10 );
+    DataScope_Get_Channel_Data( (float)timing_stats.last_us * 1000.0f, 9 );
+    DataScope_Get_Channel_Data( (float)timing_stats.max_us * 1000.0f, 10 );
     Send_Count = DataScope_Data_Generate(10);
     for( i = 0 ; i < Send_Count; i++) 
     {

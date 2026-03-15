@@ -38,6 +38,7 @@ int main(void)
 	//Framework_ModuleSetEnabled("pid", 0);
 	Framework_ModuleSetEnabled("mpc", 0);
 	Framework_ModuleSetEnabled("sim", 1);
+	Framework_ModuleSetEnabled("step", 1);
 	while(1)
 	{
 		DataScope();	            //===ион╩╩З
