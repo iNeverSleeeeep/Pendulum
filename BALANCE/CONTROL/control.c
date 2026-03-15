@@ -91,7 +91,7 @@ int TIM1_UP_IRQHandler(void)
 			return 0;
 		}
 
-		x0_raw = (float)Read_Encoder(4) * 0.00010875; // 编码器数据转换成位置
+		x0_raw = -(float)Read_Encoder(4) * 0.00010875; // 编码器数据转换成位置
 		x2_raw = -((float)Angle_Balance - 3108) * 2 * 3.1415926 / 4095;  // 角度传感器
 		
 		

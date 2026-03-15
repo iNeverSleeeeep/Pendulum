@@ -3,10 +3,12 @@
 
 static void Module_LQR_Update(float dt_s, void *user_ctx)
 {
-    float k0 = 36.3167;
-    float k1 = 46.1784;
-    float k2 = -138.1564;
-    float k3 = -22.6988;
+    // Q = [12000 0 0 0; 0 0 0 0; 0 0 2000 0; 0 0 0 0]; % Q æÿ’Û
+    // [-89.859598943918700,-64.170706672410760,-1.570566429215020e+02,-24.837820582264910]
+    float k0 = -89.859598943918700;
+    float k1 = -64.170706672410760;
+    float k2 = -1.570566429215020e+02;
+    float k3 = -24.837820582264910;
 
     RuntimeState *state = (RuntimeState *)Framework_DataGet("runtime_state", 0);
     if (state == 0) {
