@@ -87,7 +87,7 @@ static void Module_Klf_Reset_W(void *user_ctx)
     if (state == 0) {
         return;
     }
-    KalmanFilterPendulum_Init(user_ctx, STEP, 0.0001f, 0.002f, 0.0001f, state->x2_init);
+    KalmanFilterPendulum_Init(user_ctx, STEP, 0.0001f, 0.002f, 0.0001f, state->x_init[2]);
     (void)user_ctx;
 }
 
@@ -98,8 +98,8 @@ static void Module_Klf_Update_W(float dt_s, void *user_ctx)
         return;
     }
     
-		KalmanFilterPendulum_Predict(user_ctx);
-		KalmanFilterPendulum_Update(user_ctx, state->x2_raw, &state->x2, &state->x3);
+	KalmanFilterPendulum_Predict(user_ctx);
+	KalmanFilterPendulum_Update(user_ctx, state->x_raw[2], &state->x[2], &state->x[3]);
     (void)dt_s;
     (void)user_ctx;
 }
@@ -134,7 +134,7 @@ static void Module_Klf_Update_Pos(float dt_s, void *user_ctx)
         return;
     }
     KalmanFilterPendulum_Predict(user_ctx);
-    KalmanFilterPendulum_Update(user_ctx, state->x0_raw - state->x0_init, &state->x0, &state->x1);
+    KalmanFilterPendulum_Update(user_ctx, state->x_raw[0] - state->x_init[0], &state->x[0], &state->x[1]);
     (void)dt_s;
     (void)user_ctx;
 }

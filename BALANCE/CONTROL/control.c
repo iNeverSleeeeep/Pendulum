@@ -98,12 +98,12 @@ int TIM1_UP_IRQHandler(void)
 		if (state->is_initialized == 0) {
 			Framework_Reset();
 			state->is_initialized = 1;
-			state->x0_init = x0_raw;
-			state->x2_init = x2_raw;
+			state->x_init[0] = x0_raw;
+			state->x_init[2] = x2_raw;
 		}
   	            
-		state->x0_raw = x0_raw;
-		state->x2_raw = x2_raw;             
+		state->x_raw[0] = x0_raw;
+		state->x_raw[2] = x2_raw;             
 
 		Framework_TickFromISR(0.001f);  //===框架时间基准（5ms）
 		Framework_RunOnce();

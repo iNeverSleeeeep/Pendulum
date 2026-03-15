@@ -28,11 +28,23 @@ typedef struct
     FrameworkDataResetFn reset;
 } FrameworkDataDescriptor;
 
+typedef struct
+{
+    u32 last_cycles;
+    u32 max_cycles;
+    u32 last_us;
+    u32 max_us;
+    u32 avg_us;
+    u32 sample_count;
+} FrameworkRunOnceTimingStats;
+
 void Framework_Init(void);
 void Framework_Reset(void);
 void Framework_RunOnce(void);
 void Framework_TickFromISR(float delta_s);
 float Framework_GetTimeS(void);
+void Framework_GetRunOnceTimingStats(FrameworkRunOnceTimingStats *stats_out);
+void Framework_ResetRunOnceTimingStats(void);
 
 int Framework_RegisterModule(const FrameworkModuleDescriptor *descriptor);
 int Framework_RegisterData(const FrameworkDataDescriptor *descriptor);

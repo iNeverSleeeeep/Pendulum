@@ -8,7 +8,7 @@ static void Module_PID_Update(float dt_s, void *user_ctx)
         return;
     }
 
-    state->y_pos = 10.0f * state->x0 + 0.0f * state->x1 + 0.0f * state->x2 + 0.0f * state->x3;
+    state->y_pos = 10.0f * state->x[0] + 0.0f * state->x[1] + 0.0f * state->x[2] + 0.0f * state->x[3];
 }
 
 static FrameworkModuleDescriptor g_module_pid =

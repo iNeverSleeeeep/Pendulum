@@ -1,6 +1,8 @@
 #include "core_framework.h"
 #include <string.h>
 
+#define FRAMEWORK_CPU_CLOCK_HZ 72000000UL
+
 typedef struct
 {
     FrameworkModuleDescriptor descriptor;
@@ -17,6 +19,63 @@ static u8 g_data_count = 0;
 
 static volatile float g_framework_time_s = 0.0f;
 static u8 g_framework_started = 0;
+static volatile FrameworkRunOnceTimingStats g_run_once_timing_stats = {0};
+static volatile unsigned long long g_run_once_total_ticks = 0;
+
+static u32 Framework_TimingReadTicks(void)
+{
+    return SysTick->VAL;
+}
+
+static u32 Framework_TimingTicksToUs(u32 ticks)
+{
+    u32 systick_clk_hz;
+
+    if ((SysTick->CTRL & SysTick_CTRL_CLKSOURCE_Msk) != 0)
+    {
+        systick_clk_hz = FRAMEWORK_CPU_CLOCK_HZ;
+    }
+    else
+    {
+        systick_clk_hz = FRAMEWORK_CPU_CLOCK_HZ / 8U;
+    }
+
+    if (systick_clk_hz == 0U)
+    {
+        return 0U;
+    }
+
+    return (u32)(((unsigned long long)ticks * 1000000ULL) / (unsigned long long)systick_clk_hz);
+}
+
+static u32 Framework_TimingElapsedTicks(u32 start_ticks, u32 end_ticks)
+{
+    u32 reload_ticks = SysTick->LOAD + 1U;
+
+    if (start_ticks >= end_ticks)
+    {
+        return start_ticks - end_ticks;
+    }
+
+    return start_ticks + (reload_ticks - end_ticks);
+}
+
+static void Framework_TimingUpdate(u32 elapsed_ticks)
+{
+    g_run_once_timing_stats.last_cycles = elapsed_ticks;
+    g_run_once_timing_stats.last_us = Framework_TimingTicksToUs(elapsed_ticks);
+
+    if (elapsed_ticks > g_run_once_timing_stats.max_cycles)
+    {
+        g_run_once_timing_stats.max_cycles = elapsed_ticks;
+        g_run_once_timing_stats.max_us = g_run_once_timing_stats.last_us;
+    }
+
+    ++g_run_once_timing_stats.sample_count;
+    g_run_once_total_ticks += elapsed_ticks;
+    g_run_once_timing_stats.avg_us = Framework_TimingTicksToUs(
+        (u32)(g_run_once_total_ticks / g_run_once_timing_stats.sample_count));
+}
 
 static int Framework_StrEq(const char *a, const char *b)
 {
@@ -81,12 +140,14 @@ void Framework_RunOnce(void)
 {
     u8 i;
     float now;
+    u32 start_ticks;
 
     if (g_framework_started == 0)
     {
         return;
     }
 
+    start_ticks = Framework_TimingReadTicks();
     now = Framework_GetTimeS();
 
     for (i = 0; i < g_module_count; ++i)
@@ -113,6 +174,8 @@ void Framework_RunOnce(void)
             }
         }
     }
+
+    Framework_TimingUpdate(Framework_TimingElapsedTicks(start_ticks, Framework_TimingReadTicks()));
 }
 
 void Framework_TickFromISR(float delta_s)
@@ -123,6 +186,21 @@ void Framework_TickFromISR(float delta_s)
 float Framework_GetTimeS(void)
 {
     return g_framework_time_s;
+}
+
+void Framework_GetRunOnceTimingStats(FrameworkRunOnceTimingStats *stats_out)
+{
+    if (stats_out == 0)
+    {
+        return;
+    }
+    *stats_out = g_run_once_timing_stats;
+}
+
+void Framework_ResetRunOnceTimingStats(void)
+{
+    memset((void *)&g_run_once_timing_stats, 0, sizeof(g_run_once_timing_stats));
+    g_run_once_total_ticks = 0;
 }
 
 int Framework_RegisterModule(const FrameworkModuleDescriptor *descriptor)

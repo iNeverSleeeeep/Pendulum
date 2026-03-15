@@ -489,47 +489,23 @@ static void Module_MPC_Update(float dt_s, void *user_ctx)
         return;
     }
 
-    state->qp_status = MPC_STATUS_STATE_ERROR;
-
     /* 小车位置误差 */
-    x[0] = state->x0 - state->x0_target;
+    x[0] = state->x[0] - state->x_d[0];
     /* 小车速度误差 */
-    x[1] = state->x1 - state->x1_target;
+    x[1] = state->x[1] - state->x_d[1];
     /* 摆杆角度误差 */
-    x[2] = state->x2 - state->x2_target;
+    x[2] = state->x[2] - state->x_d[2];
 
-    state->qp_status = Mpc_Solve(x, &u_k);
-    state->mpc_f0 = g_mpc_ws.f[0];
-    state->mpc_u0 = g_mpc_ws.u_seq[0];
-    state->mpc_primal0 = (float)g_mpc_qp.primal[0];
-    state->mpc_x0 = (g_mpc_qp.workspace.x != 0) ? (float)g_mpc_qp.workspace.x[0] : 0.0f;
-    state->mpc_h00 = g_mpc_ws.H[0][0];
-    state->mpc_f1 = g_mpc_ws.f[1];
-    state->mpc_f2 = g_mpc_ws.f[2];
-    state->mpc_v0 = (g_mpc_qp.workspace.v != 0) ? (float)g_mpc_qp.workspace.v[0] : 0.0f;
-    state->mpc_v1 = (g_mpc_qp.workspace.v != 0) ? (float)g_mpc_qp.workspace.v[1] : 0.0f;
-    state->mpc_v2 = (g_mpc_qp.workspace.v != 0) ? (float)g_mpc_qp.workspace.v[2] : 0.0f;
-    state->mpc_u_internal0 = (g_mpc_qp.workspace.u != 0) ? (float)g_mpc_qp.workspace.u[0] : 0.0f;
-    if (g_mpc_qp.workspace.Rinv != 0) {
-        state->mpc_rinv0 = (float)g_mpc_qp.workspace.Rinv[0];
-    } else if (g_mpc_qp.workspace.RinvD != 0) {
-        state->mpc_rinv0 = (float)g_mpc_qp.workspace.RinvD[0];
-    } else {
-        state->mpc_rinv0 = 0.0f;
-    }
-    state->mpc_iter = (float)g_mpc_qp.result.iter;
-    state->mpc_v_null = (g_mpc_qp.workspace.v == 0) ? 1.0f : 0.0f;
-    state->mpc_rinv_null = (g_mpc_qp.workspace.Rinv == 0) ? 1.0f : 0.0f;
-    state->mpc_rinvd_null = (g_mpc_qp.workspace.RinvD == 0) ? 1.0f : 0.0f;
+    Mpc_Solve(x, &u_k);
 
     /* 对应 MATLAB 输出 x_d(1) */
-    state->x0_target = 0.0f;
+    state->x_d[0] = 0.0f;
     /* 对应 MATLAB 输出 x_d(2) */
-    state->x1_target = 0.0f;
+    state->x_d[1] = 0.0f;
     /* 对应 MATLAB 输出 x_d(3) = u_k */
-    state->x2_target = u_k;
+    state->x_d[2] = -u_k;
     /* 对应 MATLAB 输出 x_d(4) */
-    state->x3_target = 0.0f;
+    state->x_d[3] = 0.0f;
 }
 
 static FrameworkModuleDescriptor g_module_mpc =
