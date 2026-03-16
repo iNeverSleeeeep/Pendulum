@@ -18,8 +18,8 @@ static void Module_SMC_Update(float dt_s, void *user_ctx)
     
     // [0, 1, 20, 1]
     s = 0.0*e[0] + 1*e[1] + 20*e[2] + 1*e[3];
-    if (abs(s) <= 1)
-        sat_s = s / 1;
+    if (abs(s) <= 3)
+        sat_s = s / 3;
     else
         sat_s = s > 0 ? 1 : -1;
 

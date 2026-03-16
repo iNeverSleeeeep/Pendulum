@@ -27,16 +27,12 @@ void KalmanFilterPendulum_Init(KalmanFilterPendulum *kf, float dt, float Q1, flo
     kf->dt = dt;
 }
 
-void KalmanFilterPendulum_Predict(KalmanFilterPendulum *kf, float dt) {
+void KalmanFilterPendulum_Predict(KalmanFilterPendulum *kf, float dt, float x0_pred, float x1_pred) {
     float P00;
     float P01;
     float P10;
     float P11;
-    float x0_pred;
-    float x1_pred;
-    kf->dt = dt;
-    x0_pred = kf->X[0] + kf->X[1] * kf->dt;
-    x1_pred = kf->X[1];                      
+    kf->dt = dt;                     
     kf->X[0] = x0_pred;
     kf->X[1] = x1_pred;
     
@@ -90,7 +86,7 @@ static void Module_Klf_Reset_W(void *user_ctx)
     if (state == 0) {
         return;
     }
-    KalmanFilterPendulum_Init(user_ctx, STEP, 0.0001f, 0.2f, 0.0001f, state->x_init[2]);
+    KalmanFilterPendulum_Init(user_ctx, STEP, 0.0001f, 0.2f, 0.01f, state->x_init[2]);
     (void)user_ctx;
 }
 
@@ -101,7 +97,7 @@ static void Module_Klf_Update_W(float dt_s, void *user_ctx)
         return;
     }
     
-	KalmanFilterPendulum_Predict(user_ctx, dt_s);
+	KalmanFilterPendulum_Predict(user_ctx, dt_s, state->x_sim[2], state->x_sim[3]);
 	KalmanFilterPendulum_Update(user_ctx, state->x_raw[2], &state->x[2], &state->x[3]);
     (void)dt_s;
     (void)user_ctx;
@@ -127,7 +123,7 @@ static void Module_Klf_Reset_Pos(void *user_ctx)
     if (state == 0) {
         return;
     }
-    KalmanFilterPendulum_Init(user_ctx, STEP, 0.0001f, 0.2f, 0.0001f, 0);
+    KalmanFilterPendulum_Init(user_ctx, STEP, 0.0001f, 0.2f, 0.01f, 0);
     (void)user_ctx;
 }
 static void Module_Klf_Update_Pos(float dt_s, void *user_ctx)
@@ -136,7 +132,7 @@ static void Module_Klf_Update_Pos(float dt_s, void *user_ctx)
     if (state == 0) {
         return;
     }
-    KalmanFilterPendulum_Predict(user_ctx, dt_s);
+    KalmanFilterPendulum_Predict(user_ctx, dt_s, state->x_sim[0], state->x_sim[1]);
     KalmanFilterPendulum_Update(user_ctx, state->x_raw[0] - state->x_init[0], &state->x[0], &state->x[1]);
     (void)dt_s;
     (void)user_ctx;

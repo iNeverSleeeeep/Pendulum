@@ -20,11 +20,13 @@ typedef struct
     float y_w; // 当前输出电压（角度环）
 
     float x_sim[STATE_DIM]; // 板载仿真值
+    float x_sim_e[STATE_DIM]; // 板载仿真残差累积
 } RuntimeState;
 
 enum {
+    Priority_Simulation = 1,
     Priority_State_Observer = 10,
-    Priority_Simulation = 11,
+    Priority_Simulation_Error = 11,
     Priority_Controller_Pos = 20,
     Priority_Controller_W = 30,
     Priority_Scope = 99,

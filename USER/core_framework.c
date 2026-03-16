@@ -2,6 +2,17 @@
 #include <string.h>
 
 #define FRAMEWORK_CPU_CLOCK_HZ 72000000UL
+#define FRAMEWORK_DEMCR_TRCENA_Msk (1UL << 24)
+#define FRAMEWORK_DWT_CTRL_CYCCNTENA_Msk (1UL << 0)
+
+typedef struct
+{
+    volatile u32 CTRL;
+    volatile u32 CYCCNT;
+} FrameworkDwtMinimalType;
+
+#define FRAMEWORK_DWT_BASE_ADDR 0xE0001000UL
+#define FRAMEWORK_DWT ((FrameworkDwtMinimalType *)FRAMEWORK_DWT_BASE_ADDR)
 
 typedef struct
 {
@@ -21,43 +32,43 @@ static volatile float g_framework_time_s = 0.0f;
 static u8 g_framework_started = 0;
 static volatile FrameworkRunOnceTimingStats g_run_once_timing_stats = {0};
 static volatile unsigned long long g_run_once_total_ticks = 0;
+static u8 g_framework_timing_ready = 0;
+
+static void Framework_TimingInit(void)
+{
+    CoreDebug->DEMCR |= FRAMEWORK_DEMCR_TRCENA_Msk;
+    FRAMEWORK_DWT->CYCCNT = 0U;
+    FRAMEWORK_DWT->CTRL |= FRAMEWORK_DWT_CTRL_CYCCNTENA_Msk;
+    g_framework_timing_ready = 1;
+}
 
 static u32 Framework_TimingReadTicks(void)
 {
-    return SysTick->VAL;
+    if (g_framework_timing_ready == 0)
+    {
+        return 0U;
+    }
+    return FRAMEWORK_DWT->CYCCNT;
 }
 
 static u32 Framework_TimingTicksToUs(u32 ticks)
 {
-    u32 systick_clk_hz;
-
-    if ((SysTick->CTRL & SysTick_CTRL_CLKSOURCE_Msk) != 0)
-    {
-        systick_clk_hz = FRAMEWORK_CPU_CLOCK_HZ;
-    }
-    else
-    {
-        systick_clk_hz = FRAMEWORK_CPU_CLOCK_HZ / 8U;
-    }
-
-    if (systick_clk_hz == 0U)
+    if (FRAMEWORK_CPU_CLOCK_HZ == 0U)
     {
         return 0U;
     }
 
-    return (u32)(((unsigned long long)ticks * 1000000ULL) / (unsigned long long)systick_clk_hz);
+    return (u32)(((unsigned long long)ticks * 1000000ULL) / (unsigned long long)FRAMEWORK_CPU_CLOCK_HZ);
 }
 
 static u32 Framework_TimingElapsedTicks(u32 start_ticks, u32 end_ticks)
 {
-    u32 reload_ticks = SysTick->LOAD + 1U;
-
-    if (start_ticks >= end_ticks)
+    if (end_ticks >= start_ticks)
     {
-        return start_ticks - end_ticks;
+        return end_ticks - start_ticks;
     }
 
-    return start_ticks + (reload_ticks - end_ticks);
+    return 0xFFFFFFFFUL - start_ticks + end_ticks + 1U;
 }
 
 static void Framework_TimingUpdate(u32 elapsed_ticks)
@@ -106,6 +117,7 @@ static void Framework_SortModulesByPriority(void)
 
 void Framework_Init(void)
 {
+    Framework_TimingInit();
     Framework_SortModulesByPriority();
     Framework_Reset();
 }
