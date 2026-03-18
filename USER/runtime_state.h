@@ -12,7 +12,7 @@ typedef struct
 
 
     float x_init[STATE_DIM]; // 初始值
-    float x_raw[STATE_DIM]; // 传感器数据，只有小车位置和摆杆角度值有效
+    float x_raw[STATE_DIM]; // 传感器数据，只有小车位置[0]和摆杆角度[2]值有效
     float x[STATE_DIM]; // 当前值
     float x_d[STATE_DIM]; // 目标值
 
@@ -21,10 +21,15 @@ typedef struct
 
     float x_sim[STATE_DIM]; // 板载仿真值
     float x_sim_e[STATE_DIM]; // 板载仿真残差累积
+
+    float s;
+    float u_sw;
+    float u_eq;
 } RuntimeState;
 
 enum {
-    Priority_Simulation = 1,
+    Priority_Input = 1,
+    Priority_Simulation = 2,
     Priority_State_Observer = 10,
     Priority_Simulation_Error = 11,
     Priority_Controller_Pos = 20,

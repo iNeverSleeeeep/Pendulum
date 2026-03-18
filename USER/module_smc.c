@@ -6,6 +6,7 @@ static void Module_SMC_Update(float dt_s, void *user_ctx)
     float e[4] = {0};
     float u_eq,u_sw;
     float s,sat_s;
+    float delta = 0.20f;
     RuntimeState *state = (RuntimeState *)Framework_DataGet("runtime_state", 0);
     if (state == 0) {
         return;
@@ -18,17 +19,19 @@ static void Module_SMC_Update(float dt_s, void *user_ctx)
     
     // [0, 1, 20, 1]
     s = 0.0*e[0] + 1*e[1] + 20*e[2] + 1*e[3];
-    if (abs(s) <= 3)
-        sat_s = s / 3;
+    state->s = s;
+    if (s > -delta && s < delta)
+        sat_s = s / delta;
     else
-        sat_s = s > 0 ? 1 : -1;
+        sat_s = s > 0.0f ? 1 : -1;
 
     // [0,12.888888888888895,24.043180849068400,1.657363137313881]
     u_eq = 0.0*e[0] + 12.888888888888895*e[1] + 24.043180849068400*e[2] + 11.186579654870580*e[3];
-    //u_eq -= 0.0*state->x0_target + 12.888888888888890*state->x1_target + 1.927841953677244*state->x2_target + 1.657363137313881*state->x3_target;
-    u_sw = 5 * sat_s;
+    u_sw = 10.0f * sat_s * sat_s * sat_s;
 
     state->y_w = u_eq + u_sw;
+    state->u_sw = u_sw;
+    state->u_eq = u_eq;
 }
 
 static FrameworkModuleDescriptor g_module_smc =

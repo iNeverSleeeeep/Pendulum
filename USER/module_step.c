@@ -21,18 +21,21 @@ static void Module_Step_Update(float dt_s, void *user_ctx)
         return;
     }
 
-    step_data->time_after_reset += dt_s;
-    if (step_data->time_after_reset > 1.0f)
+    if (state->x_d[0] > 0.0f)
     {
-        state->y_pos = 5;
+        state->x_d[0] = 0.0f;
+    }
+    else
+    {
+        state->x_d[0] = 0.2f;
     }
 }
 
 static FrameworkModuleDescriptor g_module_pid =
 {
     "step",
-    0.05f,
-    Priority_Controller_Pos,
+    5.0f,
+    Priority_Input,
     Module_Step_Update,
     Module_Step_Reset,
     &g_step_data

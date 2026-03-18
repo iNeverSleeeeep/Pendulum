@@ -504,6 +504,7 @@ static void Module_MPC_Update(float dt_s, void *user_ctx)
     state->x_d[1] = 0.0f;
     /* 对应 MATLAB 输出 x_d(3) = u_k */
     state->x_d[2] = u_k;
+    // state->x_d[2] = 0;
     /* 对应 MATLAB 输出 x_d(4) */
     state->x_d[3] = 0.0f;
 }
