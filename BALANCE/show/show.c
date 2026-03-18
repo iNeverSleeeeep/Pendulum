@@ -143,26 +143,30 @@ void oled_show(void)
 **************************************************************************/
 void DataScope(void)
 {   
+	float now = Framework_GetTimeS();
     RuntimeState *state = (RuntimeState *)Framework_DataGet("runtime_state", 0);
     FrameworkRunOnceTimingStats timing_stats;
     if (state == 0) {
         return;
     }
     Framework_GetRunOnceTimingStats(&timing_stats);
-    DataScope_Get_Channel_Data( state->x[0] * 100.0f, 1 );
-    DataScope_Get_Channel_Data( state->x[1] * 100.0f, 2 );
-    DataScope_Get_Channel_Data( state->x[2] * 180.0f / 3.1415926, 3 );
-    DataScope_Get_Channel_Data( state->x[3] * 180.0f / 3.1415926, 4 );
-    DataScope_Get_Channel_Data( state->s * 100.0f, 5 );
-    DataScope_Get_Channel_Data( state->x_d[2] * 180.0f / 3.1415926, 6 );
-    DataScope_Get_Channel_Data( state->u_eq * 100.0f, 7 );
-    DataScope_Get_Channel_Data( state->u_sw * 100.0f, 8 );
+    DataScope_Get_Channel_Data( state->x_d[0] * 100.0f, 1 );
+    DataScope_Get_Channel_Data( state->x[0] * 100.0f, 2 );
+    // DataScope_Get_Channel_Data( state->x[1] * 100.0f, 2 );
+    DataScope_Get_Channel_Data( state->x_d[2] * 180.0f / 3.1415926, 3 );
+    DataScope_Get_Channel_Data( state->x[2] * 180.0f / 3.1415926, 4 );
+    // DataScope_Get_Channel_Data( state->x[3] * 180.0f / 3.1415926, 4 );
+
+    DataScope_Get_Channel_Data( state->y_w, 5 );
+    DataScope_Get_Channel_Data( state->x_sim_e[0] * 100.0f, 6 );
+    DataScope_Get_Channel_Data( state->x_sim_e[2] * 180.0f / 3.1415926, 7 );
     //DataScope_Get_Channel_Data( state->x_sim[0] * 100.0f, 2 );
     //DataScope_Get_Channel_Data( (state->x_raw[0]-state->x_init[0]) * 100.0f, 3 );
     //DataScope_Get_Channel_Data( state->x_sim[1] * 100.0f, 5 );
     //DataScope_Get_Channel_Data( state->x[2] * 180.0f / 3.1415926, 6 );
     // DataScope_Get_Channel_Data( state->x_raw[2] * 180.0f / 3.1415926, 8 );
     // DataScope_Get_Channel_Data( state->x_sim[3] * 180.0f / 3.1415926, 10 );
+    DataScope_Get_Channel_Data( (float)now * 1000.0f, 8 );
     DataScope_Get_Channel_Data( (float)timing_stats.last_us / 1000.0f, 9 );
     DataScope_Get_Channel_Data( (float)timing_stats.max_us / 1000.0f, 10 );
     Send_Count = DataScope_Data_Generate(10);

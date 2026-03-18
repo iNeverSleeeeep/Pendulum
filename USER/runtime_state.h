@@ -34,6 +34,7 @@ enum {
     Priority_Simulation_Error = 11,
     Priority_Controller_Pos = 20,
     Priority_Controller_W = 30,
+    Priority_Controller_W_Comp = 31,
     Priority_Scope = 99,
 };
 

@@ -124,10 +124,10 @@ static void Module_Simulation_Error_Update(float dt_s, void *user_ctx)
         return;
     }
 
-    state->x_sim_e[0] += (state->x[0] - state->x_sim[0]) * dt_s;
-    state->x_sim_e[1] += (state->x[1] - state->x_sim[1]) * dt_s;
-    state->x_sim_e[2] += (state->x[2] - state->x_sim[2]) * dt_s;
-    state->x_sim_e[3] += (state->x[3] - state->x_sim[3]) * dt_s;
+    state->x_sim_e[0] += (state->x[0] - state->x_sim[0]);
+    state->x_sim_e[1] += (state->x[1] - state->x_sim[1]);
+    state->x_sim_e[2] += (state->x[2] - state->x_sim[2]);
+    state->x_sim_e[3] += (state->x[3] - state->x_sim[3]);
 }
 
 static FrameworkModuleDescriptor g_module_simulation_error =

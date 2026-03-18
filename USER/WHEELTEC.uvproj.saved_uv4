@@ -393,6 +393,11 @@
               <FileType>1</FileType>
               <FilePath>.\module_mpc.c</FilePath>
             </File>
+            <File>
+              <FileName>module_l1.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\module_l1.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

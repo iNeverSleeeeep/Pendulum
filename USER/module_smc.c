@@ -19,7 +19,6 @@ static void Module_SMC_Update(float dt_s, void *user_ctx)
     
     // [0, 1, 20, 1]
     s = 0.0*e[0] + 1*e[1] + 20*e[2] + 1*e[3];
-    state->s = s;
     if (s > -delta && s < delta)
         sat_s = s / delta;
     else
@@ -30,8 +29,6 @@ static void Module_SMC_Update(float dt_s, void *user_ctx)
     u_sw = 10.0f * sat_s * sat_s * sat_s;
 
     state->y_w = u_eq + u_sw;
-    state->u_sw = u_sw;
-    state->u_eq = u_eq;
 }
 
 static FrameworkModuleDescriptor g_module_smc =

@@ -421,6 +421,11 @@
               <FilePath>.\module_lqr.c</FilePath>
             </File>
             <File>
+              <FileName>module_l1.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\module_l1.c</FilePath>
+            </File>
+            <File>
               <FileName>module_pid.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\module_pid.c</FilePath>
