@@ -157,7 +157,7 @@ void DataScope(void)
     DataScope_Get_Channel_Data( state->x[2] * 180.0f / 3.1415926, 4 );
     // DataScope_Get_Channel_Data( state->x[3] * 180.0f / 3.1415926, 4 );
 
-    DataScope_Get_Channel_Data( state->y_w, 5 );
+    DataScope_Get_Channel_Data( state->y_angle, 5 );
     DataScope_Get_Channel_Data( state->x_sim_e[0] * 100.0f, 6 );
     DataScope_Get_Channel_Data( state->x_sim_e[2] * 180.0f / 3.1415926, 7 );
     //DataScope_Get_Channel_Data( state->x_sim[0] * 100.0f, 2 );

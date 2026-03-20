@@ -122,7 +122,7 @@ static void Module_L1_Update(float dt_s, void *user_ctx)
     }
 
     /* 把 L1 自适应补偿量叠加到原有角度控制输出上。 */
-    state->y_w += l1_data->u_ad;
+    state->y_angle += l1_data->u_ad;
 
     /* 保存本次读到的累计误差，供下一个 L1 周期做差分。 */
     l1_data->x_sim_e_last[0] = state->x_sim_e[0];
@@ -135,7 +135,7 @@ static FrameworkModuleDescriptor g_module_l1 =
 {
     "l1",
     0.005f,
-    Priority_Controller_W_Comp,
+    Priority_Controller_Angle_Comp,
     Module_L1_Update,
     Module_L1_Reset,
     &g_l1_data,

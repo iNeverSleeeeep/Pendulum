@@ -17,7 +17,7 @@ typedef struct
     float x_d[STATE_DIM]; // 目标值
 
     float y_pos; // 当前输出电压（位置环）
-    float y_w; // 当前输出电压（角度环）
+    float y_angle; // 当前输出电压（角度环）
 
     float x_sim[STATE_DIM]; // 板载仿真值
     float x_sim_e[STATE_DIM]; // 板载仿真残差累积
@@ -33,8 +33,8 @@ enum {
     Priority_State_Observer = 10,
     Priority_Simulation_Error = 11,
     Priority_Controller_Pos = 20,
-    Priority_Controller_W = 30,
-    Priority_Controller_W_Comp = 31,
+    Priority_Controller_Angle = 30,
+    Priority_Controller_Angle_Comp = 31,
     Priority_Scope = 99,
 };
 

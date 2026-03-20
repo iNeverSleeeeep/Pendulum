@@ -53,7 +53,7 @@ static void Module_Simulation_Update(float dt_s, void *user_ctx)
         return;
     }
 
-    u = state->y_pos + state->y_w;
+    u = state->y_pos + state->y_angle;
             
     last_x0 = state->x[0];
     last_x1 = state->x[1];

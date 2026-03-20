@@ -28,14 +28,14 @@ static void Module_SMC_Update(float dt_s, void *user_ctx)
     u_eq = 0.0*e[0] + 12.888888888888895*e[1] + 24.043180849068400*e[2] + 11.186579654870580*e[3];
     u_sw = 10.0f * sat_s * sat_s * sat_s;
 
-    state->y_w = u_eq + u_sw;
+    state->y_angle = u_eq + u_sw;
 }
 
 static FrameworkModuleDescriptor g_module_smc =
 {
     "smc",
     0.005f,
-    Priority_Controller_W,
+    Priority_Controller_Angle,
     Module_SMC_Update,
     0,
     0

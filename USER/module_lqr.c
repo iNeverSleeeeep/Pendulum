@@ -15,15 +15,15 @@ static void Module_LQR_Update(float dt_s, void *user_ctx)
         return;
     }
 
-    state->y_w = k0 * (state->x[0] - state->x_d[0]) + k1 * state->x[1] + k2 * state->x[2] + k3 * state->x[3];
-    state->y_w = -state->y_w;
+    state->y_angle = k0 * (state->x[0] - state->x_d[0]) + k1 * state->x[1] + k2 * state->x[2] + k3 * state->x[3];
+    state->y_angle = -state->y_angle;
 }
 
 static FrameworkModuleDescriptor g_module_lqr =
 {
     "lqr",
     0.005f,
-    Priority_Controller_W,
+    Priority_Controller_Angle,
     Module_LQR_Update,
     0,
     0
