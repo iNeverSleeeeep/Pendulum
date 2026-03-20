@@ -1,4 +1,4 @@
-function [x_d,f_v] = mpc_solve(Np, x)
+function [x_d,f_v] = MPC_Solve(Np, x)
     A = [0 1 0;0 0 9.8;0 0 -10];
     B = [0 0 10]';
     
