@@ -36,26 +36,26 @@ sys_ss = ss(A, B, C, D);
 %% ===================== 2. 滑模控制参数设置 =====================
 % 滑模面系数矩阵C（维度：1×4，需保证C*B≠0，工程常用[λ?, 2λ, 0, 0]，聚焦摆角控制）
 lambda = 5;  % 收敛速度参数（可调，5~15）
-Sc = [0, 1, 20, 1];  % 滑模面 s = C*e
+Sc = [0, 2, 20, 3];  % 滑模面 s = C*e
 
 % 鲁棒增益（抗扰+保证可达性，可调，5~20）
 Sk = 10;       
 
 % 边界层厚度（防抖振，可调，0.05~0.2）
-delta = 0.1;  
+delta = 0.2;  
 
 %% ===================== 3. 仿真参数设置 =====================
 t_start = 0;
 t_end = 10;    % 仿真时长
 dt = 0.005;   % 仿真步长
-ratio = 5;
+ratio = 10;
 t = t_start:dt:t_end;
 
 % 期望状态（摆杆竖直、小车静止）
 x_d = [0, 0, 0.0, 0]';  
 
 % 初始状态（摆角10°，其余为0）
-x = [0, 0, 0.2, 0]';  
+x = [1, 0, 0, 0]';  
 
 % 存储数据
 x_history = zeros(4, length(t));  % 状态历史
@@ -77,7 +77,7 @@ for i = 1:length(t)
     %theta_dot_filtered = alpha * x(4) + (1 - alpha) * theta_dot_filtered;
     %x(4) = theta_dot_filtered;
     if mod(i-1, ratio) == 0
-        [x_d,fv] = MPC_Solve(20,x); 
+        [x_d,fv] = MPC_Solve(10, x); 
     end
     % 步骤1：计算跟踪误差
     e = x - x_d;  
@@ -91,6 +91,8 @@ for i = 1:length(t)
     else
         sat_s = sign(s);
     end
+
+    disp(s);
     
     % 步骤4：计算滑模控制律（核心：基于状态方程推导）
     % 等效控制 u_eq：令 ds/dt = Sc*(Ae + B*u_eq) = 0 → u_eq = -(Sc*B)^(-1)*Sc*A*e
@@ -98,17 +100,15 @@ for i = 1:length(t)
     Ma = Sc * A;
     MMM = -Mb * Ma;
     u_eq = MMM * e; 
-    % 鲁棒控制项（保证s*ds/dt ≤ 0）
-    %u_sw = Sk * sat_s;  
-    %u_sw = 0;
-    % 总控制输入
-    %u = u_eq + u_sw;
 
-    Mb = 1 / (Sc * B);
-    Ma = Sc * A;
-    u = -Mb * (Ma * e + Sk * sat_s);
-    %u_eq = -Mb * (Ma * e);
-    u_sw = -Mb * (Sk * sat_s);
+    u_sw = (Sk * sat_s * sat_s * sat_s);
+    u = u_eq + u_sw;
+    if u > 11.5
+        u = 11.5;
+    end
+    if u < -11.5
+        u = -11.5;
+    end
     
     % 步骤5：状态更新（欧拉积分，基于状态方程 dx/dt = Ax + Bu）
     dx = A * x + B * u;  
@@ -132,25 +132,25 @@ figure('Color','w');
 subplot(3,2,1);
 plot(t, x_history(1,:), 'b-', 'LineWidth',1.5);
 xlabel('时间 (s)'); ylabel('');
-title('x1'); grid on;
+title('x0'); grid on;
 
 % 子图2：摆角速度
 subplot(3,2,2);
 plot(t, x_history(2,:), 'r-', 'LineWidth',1.5);
 xlabel('时间 (s)'); ylabel('');
-title('x2'); grid on;
+title('x1'); grid on;
 
 % 子图3：u_eq
 subplot(3,2,3);
 plot(t, x_history(3,:), 'g-', 'LineWidth',1.5);
 xlabel('时间 (s)'); ylabel('');
-title('x3'); grid on;
+title('x2'); grid on;
 
 % 子图4：控制输入
 subplot(3,2,4);
 plot(t, x_history(4,:), 'k-', 'LineWidth',1.5);
 xlabel('时间 (s)'); ylabel('');
-title('x4'); grid on;
+title('x3'); grid on;
 
 % 子图4：控制输入
 subplot(3,2,5);

@@ -21,10 +21,6 @@ typedef struct
 
     float x_sim[STATE_DIM]; // 板载仿真值
     float x_sim_e[STATE_DIM]; // 板载仿真残差累积
-
-    float s;
-    float u_sw;
-    float u_eq;
 } RuntimeState;
 
 enum {

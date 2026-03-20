@@ -1,6 +1,6 @@
 function [x_d,f_v] = MPC_Solve(Np, x)
-    A = [0 1 0;0 0 9.8;0 0 -10];
-    B = [0 0 10]';
+    A = [0 1 0;0 0 9.8;0 0 -5];
+    B = [0 0 5]';
     
     Ts = 0.05;
     sys_c = ss(A,B,eye(3),zeros(3,1));
@@ -9,14 +9,14 @@ function [x_d,f_v] = MPC_Solve(Np, x)
     B = sys_d.B;
 
 
-    Q = diag([100/0.36 1/0.36 10/0.25]);
-    R = 1000;
+    Q = diag([130/0.36 10/0.36 10/0.25]);
+    R = 1900;
 
     [K,F,~] = dlqr(A,B,Q,R);
-    disp("------------")
-    disp(A)
-    disp(B)
-    disp(F)
+    %disp("------------")
+    %disp(A)
+    %disp(B)
+    %disp(F)
 
     n = size(A, 1);
     p = size(B, 2);
@@ -39,7 +39,7 @@ function [x_d,f_v] = MPC_Solve(Np, x)
 
     options = optimoptions('quadprog', ...
         'Display', 'off');
-    umax = 1;
+    umax = 0.2;
     lb = -umax * ones(Np*p,1);
     ub =  umax * ones(Np*p,1);
     [U_k, FVal] = quadprog(H,f, [], [], [], [], lb, ub, [], options);
