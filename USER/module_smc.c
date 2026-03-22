@@ -17,14 +17,14 @@ static void Module_SMC_Update(float dt_s, void *user_ctx)
     e[2] = state->x[2] - state->x_d[2];
     e[3] = state->x[3] - state->x_d[3];
     
-    // [0, 1, 20, 2]
+    // [0, 2, 20, 3]
     s = 0.0*e[0] + 2*e[1] + 20*e[2] + 3*e[3];
     if (s > -delta && s < delta)
         sat_s = s / delta;
     else
         sat_s = s > 0.0f ? 1 : -1;
 
-    u_eq = 0.0*e[0] + 12.888888888888893*e[1] + 20.869223680054745*e[2] + 4.709116044638628*e[3];
+    u_eq = 0.0*e[0] + 12.888888888888893*e[1] + 21.809511724827736*e[2] + 3.314035619026451*e[3];
     u_sw = 10.0f * sat_s * sat_s * sat_s;
 
     state->y_angle = u_eq + u_sw;

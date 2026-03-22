@@ -34,7 +34,7 @@ static void Module_Step_XD0_Update(float dt_s, void *user_ctx)
 static FrameworkModuleDescriptor g_module_step_xd0 =
 {
     "step_xd0",
-    5.0f,
+    15.0f,
     Priority_Input,
     Module_Step_XD0_Update,
     Module_Step_XD0_Reset,
@@ -81,3 +81,34 @@ static FrameworkModuleDescriptor g_module_step_xd2 =
 };
 
 FRAMEWORK_AUTO_REGISTER_MODULE(g_module_step_xd2)
+
+StepData g_step_y_data = {0};
+
+static void Module_Step_Y_Reset(void *user_ctx)
+{
+    StepData* step_data = (StepData*)user_ctx;
+    step_data->time_after_reset = 0;
+}
+
+static void Module_Step_Y_Update(float dt_s, void *user_ctx)
+{
+    StepData* step_data = (StepData*)user_ctx;
+    RuntimeState *state = (RuntimeState *)Framework_DataGet("runtime_state", 0);
+    if (state == 0) {
+        return;
+    }
+    step_data->time_after_reset += dt_s;
+    state->y_angle = step_data->time_after_reset / 10.0f;
+}
+
+static FrameworkModuleDescriptor g_module_step_y =
+{
+    "step_y",
+    1.0f,
+    Priority_Input,
+    Module_Step_Y_Update,
+    Module_Step_Y_Reset,
+    &g_step_xd2_data
+};
+
+FRAMEWORK_AUTO_REGISTER_MODULE(g_module_step_y)
