@@ -1,24 +1,46 @@
 #include "core_framework.h"
 #include "runtime_state.h"
 
-static void Module_PID_Update(float dt_s, void *user_ctx)
+static void Module_PID_Angle_Update(float dt_s, void *user_ctx)
 {
     RuntimeState *state = (RuntimeState *)Framework_DataGet("runtime_state", 0);
     if (state == 0) {
         return;
     }
 
-    state->y_pos = 10.0f * state->x[0] + 0.0f * state->x[1] + 0.0f * state->x[2] + 0.0f * state->x[3];
+    state->y_angle = 66.0f * state->x[2] + 66.0f * state->x[3];
 }
 
-static FrameworkModuleDescriptor g_module_pid =
+static FrameworkModuleDescriptor g_module_pid_angle =
 {
-    "pid",
-    0.05f,
-    Priority_Controller_Pos,
-    Module_PID_Update,
+    "pid_angle",
+    0.005f,
+    Priority_Controller_Angle,
+    Module_PID_Angle_Update,
     0,
     0
 };
 
-FRAMEWORK_AUTO_REGISTER_MODULE(g_module_pid)
+FRAMEWORK_AUTO_REGISTER_MODULE(g_module_pid_angle)
+
+static void Module_PID_Pos_Update(float dt_s, void *user_ctx)
+{
+    RuntimeState *state = (RuntimeState *)Framework_DataGet("runtime_state", 0);
+    if (state == 0) {
+        return;
+    }
+
+    state->y_pos = 10.0f * (state->x[0] - state->x_d[0]) + 100.0f * state->x[1];
+}
+
+static FrameworkModuleDescriptor g_module_pid_pos =
+{
+    "pid_pos",
+    0.02f,
+    Priority_Controller_Pos,
+    Module_PID_Pos_Update,
+    0,
+    0
+};
+
+FRAMEWORK_AUTO_REGISTER_MODULE(g_module_pid_pos)

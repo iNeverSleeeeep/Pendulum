@@ -34,14 +34,15 @@ int main(void)
 	Framework_ModuleSetEnabled("klf_pos", 1);
 	Framework_ModuleSetEnabled("klf_angle", 1);
 	Framework_ModuleSetEnabled("lqr", 0);
-	Framework_ModuleSetEnabled("smc", 1);
-	//Framework_ModuleSetEnabled("pid", 0);
+	Framework_ModuleSetEnabled("smc", 0);
+	Framework_ModuleSetEnabled("pid_angle", 1);
+	Framework_ModuleSetEnabled("pid_pos", 1);
 	Framework_ModuleSetEnabled("mpc", 0);
 	Framework_ModuleSetEnabled("l1", 0);
 	Framework_ModuleSetEnabled("sim", 1);
 	Framework_ModuleSetEnabled("sim_e", 1);
 	Framework_ModuleSetEnabled("step_xd0", 0);
-	Framework_ModuleSetEnabled("step_xd2", 1);
+	Framework_ModuleSetEnabled("step_xd2", 0);
 	Framework_ModuleSetEnabled("step_y", 0);
 	while(1)
 	{
