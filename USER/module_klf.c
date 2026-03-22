@@ -80,7 +80,7 @@ void KalmanFilterPendulum_Update(KalmanFilterPendulum *kf, float z, float *filte
 
 // 卡尔曼角度和角速度估计
 KalmanFilterPendulum kf_w = {0};
-static void Module_Klf_Reset_W(void *user_ctx)
+static void Module_Klf_Reset_Angle(void *user_ctx)
 {
     RuntimeState *state = (RuntimeState *)Framework_DataGet("runtime_state", 0);
     if (state == 0) {
@@ -90,7 +90,7 @@ static void Module_Klf_Reset_W(void *user_ctx)
     (void)user_ctx;
 }
 
-static void Module_Klf_Update_W(float dt_s, void *user_ctx)
+static void Module_Klf_Update_Angle(float dt_s, void *user_ctx)
 {
     RuntimeState *state = (RuntimeState *)Framework_DataGet("runtime_state", 0);
     if (state == 0) {
@@ -103,17 +103,17 @@ static void Module_Klf_Update_W(float dt_s, void *user_ctx)
     (void)user_ctx;
 }
 
-static FrameworkModuleDescriptor g_module_klf_w =
+static FrameworkModuleDescriptor g_module_klf_angle =
 {
-    "klf_w",
+    "klf_angle",
     STEP,
     Priority_State_Observer,
-    Module_Klf_Update_W,
-    Module_Klf_Reset_W,
+    Module_Klf_Update_Angle,
+    Module_Klf_Reset_Angle,
     &kf_w
 };
 
-FRAMEWORK_AUTO_REGISTER_MODULE(g_module_klf_w)
+FRAMEWORK_AUTO_REGISTER_MODULE(g_module_klf_angle)
 
 // 卡尔曼位置和速度估计
 KalmanFilterPendulum kf_pos = {0};

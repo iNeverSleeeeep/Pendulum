@@ -7,13 +7,13 @@ typedef struct {
 
 StepData g_step_xd0_data = {0};
 
-static void Module_Step_XD0_Update(void *user_ctx)
+static void Module_Step_XD0_Reset(void *user_ctx)
 {
     StepData* step_data = (StepData*)user_ctx;
     step_data->time_after_reset = 0;
 }
 
-static void Module_Step_XD0_Reset(float dt_s, void *user_ctx)
+static void Module_Step_XD0_Update(float dt_s, void *user_ctx)
 {
     StepData* step_data = (StepData*)user_ctx;
     RuntimeState *state = (RuntimeState *)Framework_DataGet("runtime_state", 0);
@@ -64,12 +64,16 @@ static void Module_Step_XD2_Update(float dt_s, void *user_ctx)
     {
         state->x_d[2] = 0.1f;
     }
+    if (step_data->time_after_reset > 1.49f)
+    {
+        state->x_d[2] = 0.0f;
+    }
 }
 
 static FrameworkModuleDescriptor g_module_step_xd2 =
 {
     "step_xd2",
-    1.0f,
+    0.001f,
     Priority_Input,
     Module_Step_XD2_Update,
     Module_Step_XD2_Reset,

@@ -71,7 +71,7 @@ int TIM1_UP_IRQHandler(void)
 	if(TIM1->SR&0X0001)//5ms定时中断
 	{   
 		TIM1->SR&=~(1<<0);                                       //===清除定时器1中断标志位
-		if (delay_flag == 1 && ++delay_50 >= 50) {
+		if (++delay_50 >= 50) {
 			delay_50 = 0;
 			delay_flag = 0;
 		}

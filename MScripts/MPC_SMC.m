@@ -34,9 +34,8 @@ D = [0 0 0 0]';
 sys_ss = ss(A, B, C, D);
 
 %% ===================== 2. 滑模控制参数设置 =====================
-% 滑模面系数矩阵C（维度：1×4，需保证C*B≠0，工程常用[λ?, 2λ, 0, 0]，聚焦摆角控制）
-lambda = 5;  % 收敛速度参数（可调，5~15）
-Sc = [0, 2, 20, 3];  % 滑模面 s = C*e
+% 滑模面系数矩阵C（维度：1×4，需保证C*B≠0，工程常用[λ^2, 2λ, 0, 0]，聚焦摆角控制）
+Sc = [0, 1, 20, 2];  % 滑模面 s = C*e
 
 % 鲁棒增益（抗扰+保证可达性，可调，5~20）
 Sk = 10;       
@@ -55,7 +54,7 @@ t = t_start:dt:t_end;
 x_d = [0, 0, 0.0, 0]';  
 
 % 初始状态（摆角10°，其余为0）
-x = [1, 0, 0, 0]';  
+x = [0, 0, 0.05, 0]';  
 
 % 存储数据
 x_history = zeros(4, length(t));  % 状态历史
@@ -78,6 +77,8 @@ for i = 1:length(t)
     %x(4) = theta_dot_filtered;
     if mod(i-1, ratio) == 0
         [x_d,fv] = MPC_Solve(10, x); 
+    %if (i > 200)
+    %    x_d = [0,0,0.1,0]';
     end
     % 步骤1：计算跟踪误差
     e = x - x_d;  
@@ -91,8 +92,6 @@ for i = 1:length(t)
     else
         sat_s = sign(s);
     end
-
-    disp(s);
     
     % 步骤4：计算滑模控制律（核心：基于状态方程推导）
     % 等效控制 u_eq：令 ds/dt = Sc*(Ae + B*u_eq) = 0 → u_eq = -(Sc*B)^(-1)*Sc*A*e
@@ -154,15 +153,15 @@ title('x3'); grid on;
 
 % 子图4：控制输入
 subplot(3,2,5);
-plot(t, u_eq_history(:), 'k-', 'LineWidth',1.5);
+plot(t, x_d_history(3,:), 'k-', 'LineWidth',1.5);
 xlabel('时间 (s)'); ylabel('');
-title('eq'); grid on;
+title('xd2'); grid on;
 
 % 子图4：控制输入
 subplot(3,2,6);
-plot(t, u_sw_history(:), 'k-', 'LineWidth',1.5);
+plot(t, u_history(:), 'k-', 'LineWidth',1.5);
 xlabel('时间 (s)'); ylabel('');
-title('sw'); grid on;
+title('u'); grid on;
 
 sgtitle('倒立摆滑模控制仿真结果（基于状态方程）','FontSize',14);
 

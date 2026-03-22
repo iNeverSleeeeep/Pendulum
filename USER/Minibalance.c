@@ -32,16 +32,16 @@ int main(void)
 	Timer1_Init(9,7199);           //=====定时中断初始化
 	Framework_Init();
 	Framework_ModuleSetEnabled("klf_pos", 1);
-	Framework_ModuleSetEnabled("klf_w", 1);
+	Framework_ModuleSetEnabled("klf_angle", 1);
 	Framework_ModuleSetEnabled("lqr", 0);
 	Framework_ModuleSetEnabled("smc", 1);
 	//Framework_ModuleSetEnabled("pid", 0);
-	Framework_ModuleSetEnabled("mpc", 0);
+	Framework_ModuleSetEnabled("mpc", 1);
 	Framework_ModuleSetEnabled("l1", 0);
 	Framework_ModuleSetEnabled("sim", 1);
 	Framework_ModuleSetEnabled("sim_e", 1);
 	Framework_ModuleSetEnabled("step_xd0", 0);
-	Framework_ModuleSetEnabled("step_xd2", 1);
+	Framework_ModuleSetEnabled("step_xd2", 0);
 	while(1)
 	{
 		DataScope();	            //===上位机
