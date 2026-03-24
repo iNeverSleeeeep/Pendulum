@@ -8,17 +8,16 @@ static void Module_HInf_Update(float dt_s, void *user_ctx)
         return;
     }
 
-    state->y_pos = 10.0f * state->x[0] + 0.0f * state->x[1] + 0.0f * state->x[2] + 0.0f * state->x[3];
 }
 
-static FrameworkModuleDescriptor g_module_pid =
+static FrameworkModuleDescriptor g_module_hinf =
 {
-    "pid",
-    0.05f,
+    "hinf",
+    0.005f,
     Priority_Controller_Pos,
     Module_HInf_Update,
     0,
     0
 };
 
-FRAMEWORK_AUTO_REGISTER_MODULE(g_module_pid)
+FRAMEWORK_AUTO_REGISTER_MODULE(g_module_hinf)
