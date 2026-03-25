@@ -455,6 +455,16 @@
               <FileType>1</FileType>
               <FilePath>.\module_step.c</FilePath>
             </File>
+            <File>
+              <FileName>module_hinf.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\module_hinf.c</FilePath>
+            </File>
+            <File>
+              <FileName>module_mu.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\module_mu.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
