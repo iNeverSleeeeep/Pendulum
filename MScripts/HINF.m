@@ -29,9 +29,9 @@ G.InputName = {'u'};
 G.OutputName = {'pos', 'pos_dot','theta','theta_dot'};
 
 % 2. 定义权重函数 (给信号加“惩罚”)
-W1_pos = tf([1 2],[1 0.1]);   % 位置优先稳定：保留低频约束，但不过分压低频误差
+W1_pos = tf(1);   % 位置优先稳定：保留低频约束，但不过分压低频误差
 W1_pos.InputName = 'e_pos';  W1_pos.OutputName = 'z_pos';
-W1_theta = tf([1 20],[1 1]);   % 角度稳定：主要压制中高频摆动，低频要求适度
+W1_theta = tf([1 5],[1 1]);   % 角度稳定：主要压制中高频摆动，低频要求适度
 W1_theta.InputName = 'e_theta';  W1_theta.OutputName = 'z_theta';
 % bode(W1_pos, W1_theta);
 % grid on;
@@ -120,11 +120,14 @@ for i = 1:length(t)
     x_ctrl_next = Ak * x_ctrl + Bk * x;
     x_ctrl = x_ctrl_next;
 
-    if u > 11.5
-        u = 11.5;
+    if u > 10
+        u = 10;
     end
-    if u < -11.5
-        u = -11.5;
+    if u < -10
+        u = -10;
+    end
+    if u > -1.5 && u < 1.5
+        u = 0;
     end
     
     dx = A * x + B * u;

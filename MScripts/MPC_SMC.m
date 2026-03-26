@@ -109,6 +109,10 @@ for i = 1:length(t)
         u = -11.5;
     end
     
+    if u > -1.5 && u < 1.5
+        u = 0;
+    end
+    
     % 步骤5：状态更新（欧拉积分，基于状态方程 dx/dt = Ax + Bu）
     dx = A * x + B * u;  
     x = x + dx * dt;  

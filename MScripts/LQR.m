@@ -43,6 +43,10 @@ if rank(Tc) == 4
     for k = 1:length(t)-1
         e_k = x(k,:)' - x_d;
         u(k) = -K * e_k;
+        
+        if u(k) > -1.5 && u(k) < 1.5
+            u(k) = 0;
+        end
         x(k+1,:) = (G * x(k,:)' + H * u(k))';
         y(k+1,:) = (C * x(k+1,:)')';
     end
