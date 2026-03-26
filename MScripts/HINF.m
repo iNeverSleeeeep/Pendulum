@@ -31,38 +31,31 @@ G.OutputName = {'pos', 'pos_dot','theta','theta_dot'};
 % 2. 定义权重函数 (给信号加“惩罚”)
 W1_pos = tf([1 2],[1 0.1]);   % 位置优先稳定：保留低频约束，但不过分压低频误差
 W1_pos.InputName = 'e_pos';  W1_pos.OutputName = 'z_pos';
-W1_theta = tf([1 30],[1 1]);   % 角度稳定：主要压制中高频摆动，低频要求适度
+W1_theta = tf([1 20],[1 1]);   % 角度稳定：主要压制中高频摆动，低频要求适度
 W1_theta.InputName = 'e_theta';  W1_theta.OutputName = 'z_theta';
+% bode(W1_pos, W1_theta);
+% grid on;
+% legend('W1_pos','W1_theta');
 
-W2 = tf(0.1);                 % 放松控制量惩罚，避免为省力矩牺牲稳定性
+W2 = tf(1);                 % 放松控制量惩罚，避免为省力矩牺牲稳定性
 W2.InputName = 'u';  W2.OutputName = 'z_u';
 
 % 3. 定义加法器 (计算误差)
-SumPos = sumblk('e_pos = r_pos - pos');
+SumPos = sumblk('e_pos = pos - r_pos');
 SumTheta = sumblk('e_theta = theta');
-SumPosDot = sumblk('e_pos_dot = pos_dot');
-SumThetaDot = sumblk('e_theta_dot = theta_dot');
 
 % 5. 组装 P
-% 外部输入 w = [r_pos, u]
-% 评价信号 z = [z_pos; z_theta; z_u]
-% 测量信号 y = [e_pos; e_theta] (反馈给控制器的误差)
-P = connect(G, W1_pos, W1_theta, W2, SumPos, SumPosDot, SumTheta, SumThetaDot, ...
+P = connect(G, W1_pos, W1_theta, W2, SumPos, SumTheta, ...
             {'r_pos', 'u'}, ...
-            {'z_pos', 'z_theta', 'z_u', 'e_pos', 'e_pos_dot', 'e_theta', 'e_theta_dot'});
+            {'z_pos', 'z_theta', 'z_u', 'e_pos', 'pos_dot', 'e_theta', 'theta_dot'});
 
 % 6. 求解
 [K, clp, gamma] = hinfsyn(P, 4, 1);
 disp(gamma);
 
 CL = lft(P, K);
-norm(CL, inf)
-
-disp(K)
-% fprintf('得到的鲁棒稳定裕度: %.2f\n', stats.RobustPerf);
-
-% % 假设 K 是 musyn 算出来的高阶控制器
-% K_reduced = reduce(K, 4); % 尝试将其降到 4 阶，同时保留核心动力学特性
+isstable(CL)
+pole(CL)
 
 % 1. 定义采样时间
 Ts = 0.005; 
@@ -101,3 +94,80 @@ for i = 1:size(Dk,1)
     fprintf('},\n');
 end
 fprintf('\n};\n');
+
+%% ===================== 3. 仿真参数设置 =====================
+t_start = 0;
+t_end = 10;    % 仿真时长
+dt = 0.005;   % 仿真步长
+t = t_start:dt:t_end;
+
+% 期望状态（摆杆竖直、小车静止）
+x_d = [0, 0, 0.0, 0]';  
+
+% 初始状态（摆角10°，其余为0）
+x = [0, 0, 0.1, 0]';
+
+x_ctrl = zeros(size(Ak,1), 1);
+x_ctrl_next = zeros(size(Ak,1), 1);
+
+% 存储数据
+x_history = zeros(4, length(t));  % 状态历史
+x_d_history = zeros(4, length(t));  % 状态历史
+u_history = zeros(1, length(t));  % 控制输入历史
+
+for i = 1:length(t)
+    u = Ck * x_ctrl + Dk * x;
+    x_ctrl_next = Ak * x_ctrl + Bk * x;
+    x_ctrl = x_ctrl_next;
+
+    if u > 11.5
+        u = 11.5;
+    end
+    if u < -11.5
+        u = -11.5;
+    end
+    
+    dx = A * x + B * u;
+    x = x + dx * dt;
+
+    x_history(:, i) = x;
+    x_d_history(:, i) = x_d;
+    u_history(i) = u;
+end
+
+figure('Color','w');
+% 子图1：摆角响应
+subplot(3,2,1);
+plot(t, x_history(1,:), 'b-', 'LineWidth',1.5);
+xlabel('时间 (s)'); ylabel('');
+title('x0'); grid on;
+
+% 子图2：摆角速度
+subplot(3,2,2);
+plot(t, x_history(2,:), 'r-', 'LineWidth',1.5);
+xlabel('时间 (s)'); ylabel('');
+title('x1'); grid on;
+
+% 子图3：u_eq
+subplot(3,2,3);
+plot(t, x_history(3,:), 'g-', 'LineWidth',1.5);
+xlabel('时间 (s)'); ylabel('');
+title('x2'); grid on;
+
+% 子图4：控制输入
+subplot(3,2,4);
+plot(t, x_history(4,:), 'k-', 'LineWidth',1.5);
+xlabel('时间 (s)'); ylabel('');
+title('x3'); grid on;
+
+% 子图4：控制输入
+subplot(3,2,5);
+plot(t, x_d_history(3,:), 'k-', 'LineWidth',1.5);
+xlabel('时间 (s)'); ylabel('');
+title('xd2'); grid on;
+
+% 子图4：控制输入
+subplot(3,2,6);
+plot(t, u_history(:), 'k-', 'LineWidth',1.5);
+xlabel('时间 (s)'); ylabel('');
+title('u'); grid on;

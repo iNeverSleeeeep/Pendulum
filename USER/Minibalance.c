@@ -34,9 +34,10 @@ int main(void)
 	Framework_ModuleSetEnabled("klf_pos", 1);
 	Framework_ModuleSetEnabled("klf_angle", 1);
 	Framework_ModuleSetEnabled("lqr", 0);
+	Framework_ModuleSetEnabled("hinf", 1);
 	Framework_ModuleSetEnabled("smc", 0);
-	Framework_ModuleSetEnabled("pid_angle", 1);
-	Framework_ModuleSetEnabled("pid_pos", 1);
+	Framework_ModuleSetEnabled("pid_angle", 0);
+	Framework_ModuleSetEnabled("pid_pos", 0);
 	Framework_ModuleSetEnabled("mpc", 0);
 	Framework_ModuleSetEnabled("l1", 0);
 	Framework_ModuleSetEnabled("sim", 1);
