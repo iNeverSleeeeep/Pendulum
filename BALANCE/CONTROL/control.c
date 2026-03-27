@@ -107,7 +107,7 @@ int TIM1_UP_IRQHandler(void)
 
 		Framework_TickFromISR(0.001f);  //===框架时间基准（1ms）
 		Framework_RunOnce();
-		Set_Pwm((state->y_pos + state->y_angle) * 600);		//===赋值给PWM寄存器
+		Set_Pwm((state->y_pos + state->y_angle + state->y_compensation) * 600);		//===赋值给PWM寄存器
 		
 	}
 	if (ErrorCode==0) {

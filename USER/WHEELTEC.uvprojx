@@ -465,6 +465,11 @@
               <FileType>1</FileType>
               <FilePath>.\module_mu.c</FilePath>
             </File>
+            <File>
+              <FileName>module_deadzone_compensation.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\module_deadzone_compensation.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

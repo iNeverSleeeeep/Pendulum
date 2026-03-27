@@ -18,6 +18,7 @@ typedef struct
 
     float y_pos; // 当前输出电压（位置环）
     float y_angle; // 当前输出电压（角度环）
+    float y_compensation; // 死区补偿
 
     float x_sim[STATE_DIM]; // 板载仿真值
     float x_sim_e[STATE_DIM]; // 板载仿真残差累积
@@ -31,6 +32,7 @@ enum {
     Priority_Controller_Pos = 20,
     Priority_Controller_Angle = 30,
     Priority_Controller_Angle_Comp = 31,
+    Priority_DeadZoneCompensation = 50,
     Priority_Scope = 99,
 };
 
